@@ -16,20 +16,42 @@ Outil reproductible pour : (1) diagnostiquer l'accessibilité des quartiers depu
 
 ## Installation
 
-Prérequis : Python ≥ 3.11, Node ≥ 18.
+Prérequis : Python ≥ 3.11 et Node.js ≥ 18 (avec npm). Toutes les commandes se lancent depuis le dossier du projet.
+
+**1. Créer l'environnement virtuel Python** (une seule fois) :
 
 ```bash
 python -m venv .venv
-.venv/Scripts/activate        # Windows (Git Bash)  |  source .venv/bin/activate sous Linux/macOS
+```
+
+**2. L'activer** (à chaque nouveau terminal) — la commande dépend du terminal :
+
+| Terminal | Commande |
+|---|---|
+| Invite de commandes Windows (cmd) | `.venv\Scripts\activate` |
+| PowerShell | `.venv\Scripts\Activate.ps1` |
+| Git Bash | `source .venv/Scripts/activate` |
+| Linux / macOS | `source .venv/bin/activate` |
+
+Le préfixe `(.venv)` apparaît alors devant l'invite. Sous PowerShell, si l'activation est refusée (« l'exécution de
+scripts est désactivée »), lancer une fois `Set-ExecutionPolicy -Scope CurrentUser RemoteSigned`.
+
+**3. Installer les dépendances** (une seule fois) :
+
+```bash
 pip install -e ".[dev]"
 npm --prefix ui install
 ```
 
-Tout lancer d'un coup (installe si besoin, génère les données, construit l'UI, démarre l'API et ouvre le navigateur) :
+**4. Tout lancer** (génère les données si besoin, construit l'UI, démarre l'API et ouvre le navigateur sur
+http://127.0.0.1:8000) :
 
 ```bash
-make demo          # ou, sans make (Windows) :  python tasks.py demo
+python tasks.py demo
 ```
+
+`python tasks.py demo` fait aussi les étapes 3 si elles manquent. Sous Linux/macOS, `make demo` est équivalent.
+Pour arrêter : Ctrl+C dans le terminal.
 
 Autres cibles : `make data | test | bench | figures | api | ui | build` (= `python tasks.py <cible>`).
 En développement : `novapolis serve` (API :8000) puis `npm --prefix ui run dev` (UI :5173).
