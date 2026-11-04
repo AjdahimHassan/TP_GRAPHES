@@ -1,0 +1,11 @@
+u,v,cost,statut
+C1,Q1,10,disponible
+Q1,H1,8,disponible
+C1,E1,12,disponible
+E1,H1,8,disponible
+H1,Q2,15,disponible
+Q2,T1,5,disponible
+T1,C2,9,disponible
+C2,Q2,9,disponible
+Q1,E1,20,interdit
+H1,T1,30,disponible

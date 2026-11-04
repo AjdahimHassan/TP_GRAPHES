@@ -1,0 +1,58 @@
+{
+  "nom": "n5000_faible",
+  "synthetique": true,
+  "description": "Ville fictive générée (données SYNTHÉTIQUES, aucune donnée réelle).",
+  "generateur": "novapolis.generator 1.0.0",
+  "preset": "benchmark",
+  "graine": 42,
+  "allow_negative": false,
+  "parametres": {
+    "nom": "n5000_faible",
+    "preset": "benchmark",
+    "graine": 42,
+    "n_sites": 5000,
+    "casernes": 50,
+    "hopitaux": 31,
+    "ecoles": 100,
+    "telecom": 40,
+    "degre_moyen": 3.0,
+    "densite": null,
+    "sens_unique_pct": 10.0,
+    "riviere": false,
+    "ponts": 6,
+    "periph": false,
+    "forme": "rectangle",
+    "pointe_min": 1.25,
+    "pointe_max": 1.85,
+    "travaux_pct": 3.0,
+    "ferme_pct": 0.0,
+    "fibre_couverture_pct": 85.0,
+    "fibre_interdite_pct": 5.0,
+    "cout_min": 30.0,
+    "cout_max": 150.0,
+    "demandes": 30,
+    "priorites": [
+      30.0,
+      45.0,
+      25.0
+    ],
+    "scenarios": [
+      "fermeture_axe",
+      "panne_fibre",
+      "heure_pointe"
+    ],
+    "site_isole": false,
+    "poids_negatifs": false
+  },
+  "ponts": 0,
+  "ponts_centraux_fermes": [],
+  "site_isole": null,
+  "sha256": {
+    "sites.csv": "24cd71d10e09f25c6d5d0cfeb7f593579bb0d179f75ec3fde1a2151c7ffe2231",
+    "routes.csv": "a7d10748666d889341787d68e4b53f86699f10cc0658d454a178ffc176874e28",
+    "fibre.csv": "ecc06fe4b21ce69b799cd6316f8d36ae8d348cf617acad5c0535092c6f82a580",
+    "demandes.csv": "a829406bd3e24b26c137bcce81086f1f485f776cb338e442c2fad5cbccd1b10c",
+    "scenarios.csv": "cfeed418ac4521c3c5e421ed5fa1c3cb070790fb37401d39c3c1d8535369094f"
+  },
+  "sha256_base": "14645d95e23b77ba5b416b97297f0346d89a9606e2f90a7bd59e27968977902f"
+}

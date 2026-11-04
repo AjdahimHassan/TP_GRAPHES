@@ -1,0 +1,31 @@
+id,origine,type,priorite
+D-01,Q-2003,Fuite de gaz,1
+D-02,Q-2614,Malaise,3
+D-03,Q-4043,Fuite de gaz,3
+D-04,Q-0607,Effondrement,2
+D-05,Q-1095,Inondation,3
+D-06,Q-3264,Malaise,3
+D-07,Q-4637,Effondrement,2
+D-08,Q-0929,Malaise,3
+D-09,Q-3624,Fuite de gaz,3
+D-10,Q-2420,Fuite de gaz,3
+D-11,Q-0578,Accident,1
+D-12,Q-0086,Inondation,1
+D-13,Q-3716,Incendie,3
+D-14,E-052,Malaise,2
+D-15,Q-2936,Incendie,2
+D-16,Q-0184,Effondrement,1
+D-17,E-008,Inondation,2
+D-18,Q-2704,Accident,1
+D-19,Q-0591,Inondation,2
+D-20,Q-0628,Inondation,1
+D-21,T-40,Inondation,3
+D-22,Q-0255,Accident,2
+D-23,Q-2390,Malaise,1
+D-24,Q-3993,Inondation,1
+D-25,Q-1096,Incendie,1
+D-26,Q-4380,Malaise,2
+D-27,E-057,Accident,2
+D-28,Q-3818,Incendie,2
+D-29,Q-0200,Effondrement,2
+D-30,Q-2137,Effondrement,3

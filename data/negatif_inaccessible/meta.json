@@ -1,0 +1,18 @@
+{
+  "nom": "negatif_inaccessible",
+  "synthetique": true,
+  "description": "Test M3 · B : circuit absorbant C → D → E → C (poids −1) NON accessible depuis S. Jeu de test artificiel : les poids négatifs ne sont pas des durées physiques.",
+  "generateur": "novapolis.generator 1.0.0",
+  "preset": "test_m3_b",
+  "graine": null,
+  "allow_negative": true,
+  "source_conseillee": "S",
+  "sha256": {
+    "sites.csv": "a0925e1016733c2753351c0997fc572fb5f0eb3d353928359a0e53f1ab70cd03",
+    "routes.csv": "f09d34ca568d9c04ab1e5af585cd3e1dc141217226d4ea42087fc42d35177bae",
+    "fibre.csv": "37726692aa193881ab3fc92669d3fc5d17fa44cba15610035e7d749b4e00012e",
+    "demandes.csv": "c82e6aa2e36d784707ba66431d04aae93aaed5893c1c30e4e31c5a3ed0d4ae55",
+    "scenarios.csv": "15e562d6e3dc7ad1075f7df1dd2ae585261fc71b49d286a7a9fd8fb467c0c614"
+  },
+  "sha256_base": "08fe8f14b1df749198e114415916988b561c06e6eae32ed1463a9b8e7fb97a44"
+}

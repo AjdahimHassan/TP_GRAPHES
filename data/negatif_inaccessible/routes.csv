@@ -1,0 +1,8 @@
+u,v,temps_normal,temps_pointe,statut
+S,A,3,3,ouvert
+A,B,2,2,ouvert
+S,B,6,6,ouvert
+C,D,2,2,ouvert
+D,E,-4,-4,ouvert
+E,C,1,1,ouvert
+E,B,1,1,ouvert

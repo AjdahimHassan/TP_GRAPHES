@@ -1,0 +1,6 @@
+scenario,cible,u,v,action,valeur,periode
+normal,,,,aucune,,normal
+fermeture_axe,route,Q1,H1,fermer,,normal
+fermeture_axe,route,H1,Q1,fermer,,normal
+panne_fibre,fibre,H1,Q2,panne,,normal
+heure_pointe,route,*,*,aucune,,pointe

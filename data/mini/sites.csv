@@ -1,0 +1,9 @@
+id,nom,type,longitude,latitude
+C1,Caserne Nord,caserne,2.3,48.88
+C2,Caserne Est,caserne,2.34,48.87
+H1,Hôpital Central,hopital,2.32,48.865
+E1,École Jaurès,ecole,2.305,48.86
+T1,Centre Télécom,telecom,2.335,48.86
+Q1,Quartier Gare,quartier,2.315,48.875
+Q2,Quartier Rivière,quartier,2.33,48.855
+Q3,Quartier Isolé,quartier,2.29,48.85

@@ -1,0 +1,17 @@
+{
+  "nom": "mini",
+  "synthetique": true,
+  "description": "Petit graphe vérifiable à la main (voir EXPECTED.md).",
+  "generateur": "novapolis.generator 1.0.0",
+  "preset": "mini",
+  "graine": null,
+  "allow_negative": false,
+  "sha256": {
+    "sites.csv": "d346bcd71106a0543e25e552dad4e65ea7158f61e24181802ebe7feccadd83e0",
+    "routes.csv": "4447790d935f9fd36b49732bf0c83b9a826ead84cf86e7695914df440424455b",
+    "fibre.csv": "f1e7b9f55ea589bf532ee688e4b885126924e9e6ba98ff8aebf840755aa76db3",
+    "demandes.csv": "509eb500367034f4814e8c54f928ecc13c638f6d4d03a102b215d360db65064d",
+    "scenarios.csv": "ae792340a10052613883c7a3f99073ba0a5d6e5d58485e127fe5c0aae17c2af4"
+  },
+  "sha256_base": "30f21f2bcd3c212921eff8fe4d58457f6d9082f2ba232720c0b64002a07dbb1c"
+}
