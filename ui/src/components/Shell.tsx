@@ -14,14 +14,14 @@ export function Sidebar({ collapsed, onToggle }: { collapsed: boolean; onToggle:
   const loc = useLocation()
   let groupe = ''
   return (
-    <aside className="flex flex-col border-r border-bd" style={{ background: 'linear-gradient(180deg,#0A1022 0%,#070B16 100%)', padding: '16px 12px 12px', width: collapsed ? 64 : 236, transition: 'width .2s' }}>
+    <aside className="flex flex-col border-r border-bd min-h-0 overflow-hidden" style={{ background: 'linear-gradient(180deg,#0A1022 0%,#070B16 100%)', padding: '16px 12px 12px', width: collapsed ? 64 : 236, transition: 'width .2s' }}>
       <div className="flex gap-[11px] items-center px-2 pb-5">
         <div className="grid place-items-center shrink-0" style={{ width: 36, height: 36, borderRadius: 11, background: 'radial-gradient(circle at 30% 25%,#ff7a8a,#FF5468 45%,#8a1f3a)', boxShadow: '0 0 0 1px #ff546855,0 8px 28px -6px #ff5468aa' }}>
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.2" strokeLinecap="round"><circle cx="5" cy="6" r="2" /><circle cx="19" cy="7" r="2" /><circle cx="12" cy="18" r="2" /><path d="M7 6.3l10 .6M6 8l5 8.3M18 9l-5 7.3" /></svg>
         </div>
         {!collapsed && <div><b className="block text-[14px] font-extrabold tracking-[.2px]">Novapolis</b><span className="mu text-[11px]">Résilience · ING1 BDML</span></div>}
       </div>
-      <nav className="flex-1 overflow-y-auto overflow-x-hidden">
+      <nav className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden">
         {PAGES.map(p => {
           const entete = p.g !== groupe ? ((groupe = p.g), true) : false
           const Icon = p.icon

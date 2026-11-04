@@ -35,11 +35,11 @@ function Layout() {
     return () => removeEventListener('keydown', k)
   }, [])
   return (
-    <div className="grid h-full" style={{ gridTemplateColumns: 'auto minmax(0, 1fr)' }}>
+    <div className="grid h-full overflow-hidden" style={{ gridTemplateColumns: 'auto minmax(0, 1fr)', gridTemplateRows: 'minmax(0, 1fr)' }}>
       <Sidebar collapsed={collapsed} onToggle={() => setCollapsed(c => !c)} />
-      <div className="grid min-w-0" style={{ gridTemplateRows: '58px minmax(0, 1fr) 30px' }}>
+      <div className="grid min-w-0 min-h-0 h-full" style={{ gridTemplateRows: '58px minmax(0, 1fr) 30px' }}>
         <TopBar onPalette={() => setPalette(true)} />
-        <main className="overflow-auto" style={{ padding: '20px 22px 28px' }}>
+        <main className="overflow-auto min-h-0" style={{ padding: '20px 22px 28px' }}>
           <motion.div key={loc.pathname} initial={{ opacity: 0.4, y: 4 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.18 }}>
               <Garde cle={loc.pathname}>
                 <Routes location={loc}>

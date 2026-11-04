@@ -78,6 +78,20 @@ export default function NetworkCanvas(p: Props) {
 
   useEffect(() => { setViewState({ ...fit, minZoom: fit.zoom - 3, maxZoom: fit.zoom + 6 }) }, [fit])
 
+  // molette seule = défilement de la page ; Ctrl + molette = zoom de la carte
+  useEffect(() => {
+    const el = box.current
+    if (!el) return
+    const onWheel = (e: WheelEvent) => {
+      if (!e.ctrlKey && !e.metaKey) return
+      e.preventDefault()
+      const dz = -Math.sign(e.deltaY) * 0.25
+      setViewState((v: any) => (v ? { ...v, zoom: Math.min(v.maxZoom ?? 99, Math.max(v.minZoom ?? -99, v.zoom + dz)) } : v))
+    }
+    el.addEventListener('wheel', onWheel, { passive: false })
+    return () => el.removeEventListener('wheel', onWheel)
+  }, [])
+
   // vol vers un site (clic sur une alerte, palette Ctrl+K)
   useEffect(() => {
     if (!p.focus || !pos.get(p.focus)) return
@@ -230,7 +244,7 @@ export default function NetworkCanvas(p: Props) {
           views={new OrthographicView({ id: 'carte', flipY: false } as any)}
           viewState={viewState}
           onViewStateChange={(e: any) => setViewState(e.viewState)}
-          controller={{ dragRotate: false, doubleClickZoom: true } as any}
+          controller={{ dragRotate: false, doubleClickZoom: true, scrollZoom: false, touchZoom: true } as any}
           layers={layers}
           getTooltip={tooltip as any}
           getCursor={({ isHovering }: any) => (isHovering ? 'pointer' : 'grab')}
@@ -242,6 +256,7 @@ export default function NetworkCanvas(p: Props) {
           <button key={k} onClick={f as any} className="w-[30px] h-[30px] rounded-lg grid place-items-center border border-bd2 text-[#C9D2E6]" style={{ background: '#0E1527E6' }}>{ic as any}</button>
         ))}
       </div>
+      <div className="absolute right-2.5 bottom-2 z-10 mu2 text-[10.5px] pointer-events-none">Ctrl + molette : zoom</div>
       {p.legend && <div className="mapover legend z-10" style={{ left: 10, bottom: 10, flexDirection: 'column', alignItems: 'flex-start', gap: 5 }}>{p.legend}</div>}
       {p.overlay}
     </div>
