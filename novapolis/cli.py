@@ -269,10 +269,14 @@ def mst(data: str = DATA, algo: str = typer.Option("both", help="kruskal | prim 
         console.print(f"Plusieurs ACM : remplacer {ech['retirer']['label']} par {ech['ajouter']['label']} (même coût {f(ech['cout'], 0)} k€) donne un autre arbre de même coût.")
     else:
         console.print("ACM unique (aucun échange de même coût).")
+    ref = r.get("kruskal") or r.get("prim")
+    aretes = ref["aretes"]
+    liste = ", ".join(f"{a['label']} ({f(a['cost'], 0)})" for a in aretes[:30])
+    suite = f" … (+{len(aretes) - 30} ; liste complète avec --export fichier.csv)" if len(aretes) > 30 else ""
+    console.print(f"Tronçons retenus ({len(aretes)}, coût k€) : {liste}{suite}")
     if r["non_raccordes"]:
         console.print(f"[yellow]Composantes non raccordées[/] : {'; '.join(', '.join(c[:8]) for c in r['non_raccordes'][:10])}")
-    ref = r.get("kruskal") or r.get("prim")
-    exporter(export, r, ref["aretes"])
+    exporter(export, r, aretes)
 
 
 @app.command("mst-panne")

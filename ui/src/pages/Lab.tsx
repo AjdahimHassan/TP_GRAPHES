@@ -297,7 +297,8 @@ export default function Lab() {
 
   const majCle = (x: string | null | undefined) => x ?? ''
   const graine = (d: string, l: string) => <button key={d} className={s.dataset === d ? 'on' : ''} onClick={() => s.setDataset(d)}>{l}</button>
-  const etiquetteVal = algo === 'bfs' ? 'niveau' : algo === 'dfs' ? 'profondeur' : 'distance'
+  // pendant l'exécution ce sont des estimations (elles peuvent encore baisser, voire valoir −∞ à la fin)
+  const etiquetteVal = algo === 'bfs' ? 'niveau' : algo === 'dfs' ? 'profondeur' : fin ? 'distance' : 'estimation'
 
   return (
     <div className="grid gap-5">

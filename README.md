@@ -193,9 +193,9 @@ Bellman–Ford = Floyd–Warshall), MST (Kruskal = Prim = networkx, forêts, ég
 
 `make bench && make figures` (≈ 20 s) : mêmes graphes pour tous les algorithmes, génération exclue du chronométrage,
 5 répétitions, graine 42. Figures : log-log temps vs n (mesure + c·f(V,E) ajustée), temps vs densité,
-Floyd–Warshall (n ≤ 400) et rapport mesure/théorie. Pentes mesurées sur la densité moyenne : BFS/DFS ≈ 1,0 ;
-Kruskal/Prim/Dijkstra ≈ 1,0–1,1 (théorie ≈ 1,1) ; Floyd–Warshall ≈ 2,9 (théorie 3) ; Bellman–Ford ≈ 1,6 au lieu de 2 car
-l'arrêt anticipé stoppe après ≈ diamètre passes (colonne `passes` du CSV).
+Floyd–Warshall (n ≤ 400) et rapport mesure/théorie. Pentes mesurées sur la densité moyenne (`reports/bench.csv` livré) :
+BFS ≈ 1,0 et DFS ≈ 1,15 (théorie 1) ; Kruskal/Prim/Dijkstra ≈ 1,0–1,1 (théorie ≈ 1,1) ; Floyd–Warshall ≈ 2,9 (théorie 3) ;
+Bellman–Ford ≈ 1,5 au lieu de 2 car l'arrêt anticipé stoppe après ≈ diamètre passes (colonne `passes` du CSV).
 
 ## Limites
 
