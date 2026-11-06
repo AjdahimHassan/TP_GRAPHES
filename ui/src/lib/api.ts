@@ -1,6 +1,6 @@
 // Client HTTP typé : TOUS les calculs sont faits par l'API Python (aucun algorithme en JavaScript).
 import type {
-  AccessResult, BenchResult, DatasetInfo, GenResult, GraphPayload, MinHop, MstResult, NegResult, PanneResult, Preset,
+  AccessResult, BenchResult, DatasetInfo, GenResult, GraphPayload, LabResult, MinHop, MstResult, NegResult, PanneResult, Preset,
   RouteResult, RoutesResult, ScenariosResult, TablePage, Validation,
 } from './types'
 
@@ -73,6 +73,7 @@ export const api = {
   mst: (dataset: string, scenario = 'normal', algo = 'both', trace = false) => req<MstResult>('POST', '/m4/mst', { dataset, scenario, algo, trace }),
   panne: (dataset: string, edge: string, algo = 'kruskal', scenario = 'normal') => req<PanneResult>('POST', '/m4/panne', { dataset, edge, algo, scenario }),
   scenarios: (dataset: string, scenarios?: string[] | null, periode?: string | null, personnalises: any[] = []) => req<ScenariosResult>('POST', '/m5/scenarios', { dataset, scenarios, periode, personnalises }),
+  lab: (c: Ctx & { algo: string; source?: string | null; cible?: string | null }) => req<LabResult>('POST', '/lab/run', c),
 
   benchLatest: () => req<BenchResult>('GET', '/bench/latest'),
   benchStart: (p: { sizes: number[]; densities: string[]; reps: number; seed: number; algos?: string[] | null }) => req<{ id: string }>('POST', '/bench', p),

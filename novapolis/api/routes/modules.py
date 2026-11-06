@@ -5,7 +5,7 @@ from __future__ import annotations
 from fastapi import APIRouter
 
 from novapolis import services as S
-from novapolis.api.schemas import AccessReq, MinHopReq, MstReq, NegReq, PanneReq, RouteReq, SandboxReq, ScenariosReq
+from novapolis.api.schemas import AccessReq, LabReq, MinHopReq, MstReq, NegReq, PanneReq, RouteReq, SandboxReq, ScenariosReq
 
 router = APIRouter()
 
@@ -54,6 +54,12 @@ def mst(req: MstReq):
 @router.post("/m4/panne", tags=["M4 fibre"])
 def panne(req: PanneReq):
     return S.m4_panne(req.dataset, req.edge, req.algo, req.scenario)
+
+
+@router.post("/lab/run", tags=["laboratoire"])
+def lab_run(req: LabReq):
+    """Exécution tracée d'un algorithme (rejouée pas à pas par la page « Laboratoire »)."""
+    return S.lab_run(req.dataset, req.algo, req.source or None, req.cible or None, req.scenario, req.periode)
 
 
 @router.post("/m5/scenarios", tags=["M5 scénarios"])

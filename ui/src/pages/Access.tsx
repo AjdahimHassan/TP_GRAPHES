@@ -1,30 +1,44 @@
-// Page 3 — Accessibilité (M1) : BFS/DFS multi-source, connexité faible / forte, chemin minimal en arcs, seuil T.
-import { MousePointerClick, Radar } from 'lucide-react'
+// Page 3 — Module 1 : BFS/DFS multi-source, connexité faible / forte, chemin minimal en arcs, circuits, seuil T.
+import { MousePointerClick, Timer } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
-import NetworkCanvas, { LegendLine } from '../components/NetworkCanvas'
-import { Card, ErrorBox, InfoCallout, PathChips, Pill, Seg, Skeleton } from '../components/ui'
+import NetworkCanvas, { LegendDot, LegendLine } from '../components/NetworkCanvas'
+import { Callout, Card, ErrorBox, IdChip, PathChips, Pill, Seg, Skeleton } from '../components/ui'
 import { StepPlayer } from '../components/widgets'
 import { api } from '../lib/api'
 import { fmt, fmtMs } from '../lib/format'
 import { useGraph, useLastCalc, useTypes } from '../lib/hooks'
 import { useApi, useStore } from '../lib/store'
 import type { MinHop } from '../lib/types'
-import { TYPE_COLOR } from '../theme/tokens'
+import { LEVEL_RAMP, levelColor, MAP, SERIES, STATUS, TYPE_COLOR } from '../theme/tokens'
 
-const PALETTE = ['#3DDC97', '#7C8CFF', '#FFB547', '#A78BFA', '#2EE6D6', '#FF9F43', '#FFD166', '#FF5468', '#5BC0EB', '#C3F73A']
-
-function lvlColor(l: number, max: number) {
-  if (l < 0) return '#FF4D4D'
-  const t = max ? l / max : 0
-  const a = [61, 220, 151], b = [124, 140, 255], c = [167, 139, 250]
-  const m = t < 0.5 ? a.map((x, i) => x + (b[i] - x) * t * 2) : b.map((x, i) => x + (c[i] - x) * (t - 0.5) * 2)
-  return `#${m.map(v => Math.round(v).toString(16).padStart(2, '0')).join('')}`
-}
+const AUTRES = '#b8b3a8'
+const compColor = (rank: number) => (rank < 7 ? SERIES[rank] : AUTRES)
 
 const NOTIONS = {
-  reach: { t: 'Depuis les sources', s: 'Sommets atteignables depuis ≥ 1 source', exp: <>Un sommet est <b>accessible</b> s'il existe un chemin <b>orienté</b> depuis au moins une source (BFS/DFS multi-source). C'est la notion utilisée par l'indicateur « quartiers desservis » et « sites non atteignables ».</> },
-  weak: { t: 'Connexité faible', s: 'Graphe vu non orienté', exp: <>On <b>oublie le sens</b> des arcs : deux sites sont dans la même composante s'ils sont reliés par une suite de routes, quel que soit le sens. Utile pour repérer les sites <b>physiquement coupés</b> du réseau (site isolé).</> },
-  scc: { t: 'Forte (CFC)', s: 'Tarjan · aller ET retour', exp: <>u et v sont <b>fortement connexes</b> si u ⇝ v <b>et</b> v ⇝ u. Un quartier atteignable depuis une caserne ne garantit pas le retour (sens uniques). Indicateur de <b>robustesse</b> : hors de la grande CFC, un véhicule peut entrer sans pouvoir ressortir.</> },
+  reach: {
+    t: 'Accessibilité', s: 'depuis les sources', algo: (a: string) => `${a.toUpperCase()} multi-source`,
+    def: <>Il existe un chemin <b>orienté</b> <span className="math">s ⇝ v</span> depuis une source.</>,
+    usage: 'sites atteignables / non atteignables',
+  },
+  weak: {
+    t: 'Connexité faible', s: 'sens des arcs ignoré', algo: () => 'BFS non orienté',
+    def: <>Reliés par des routes <b>quel que soit le sens</b>.</>,
+    usage: 'sites isolés',
+  },
+  scc: {
+    t: 'Connexité forte', s: 'aller ET retour', algo: () => 'Tarjan · O(|V| + |E|)',
+    def: <><span className="math">u ⇝ v</span> <b>et</b> <span className="math">v ⇝ u</span> : on peut repartir d’où l’on est arrivé.</>,
+    usage: 'robustesse (sens uniques)',
+  },
+}
+
+/** rang de la composante (0 = la plus grande) pour chaque sommet, à partir d'une liste de composantes. */
+function rangs(comps: string[][] | undefined) {
+  const m = new Map<string, number>()
+  if (!comps) return m
+  const triees = [...comps].sort((a, b) => b.length - a.length || (a[0] < b[0] ? -1 : 1))
+  triees.forEach((c, k) => c.forEach(x => m.set(x, k)))
+  return m
 }
 
 export default function Access() {
@@ -55,6 +69,8 @@ export default function Access() {
 
   const ids = useMemo(() => g.data?.sites.map(x => x.id) ?? [], [g.data])
   const events = r.data?.trace?.events ?? []
+  const rangFaible = useMemo(() => rangs(r.data?.faible), [r.data])
+  const rangForte = useMemo(() => rangs(r.data?.scc), [r.data])
   // rejeu de la trace jusqu'à l'étape courante
   const replay = useMemo(() => {
     if (step === null) return null
@@ -75,11 +91,11 @@ export default function Access() {
     const d = r.data
     if (!d) return undefined
     const sourcesSet = new Set(d.sources)
-    if (replay) return (x: any) => (sourcesSet.has(x.id) ? TYPE_COLOR.caserne : x.id === replay.courant ? '#FFFFFF' : replay.front.includes(x.id) ? '#FFB547' : replay.vus.has(x.id) ? lvlColor(d.niveau[x.id], d.niveau_max) : '#1c2742')
-    if (notion === 'reach') return (x: any) => (sourcesSet.has(x.id) ? TYPE_COLOR.caserne : lvlColor(d.niveau[x.id], d.niveau_max))
-    if (notion === 'weak') return (x: any) => PALETTE[d.faible_index[x.id] % PALETTE.length]
-    return (x: any) => (d.scc_index[x.id] === 0 ? '#3DDC97' : PALETTE[(d.scc_index[x.id] + 1) % PALETTE.length])
-  }, [r.data, notion, replay])
+    if (replay) return (x: any) => (sourcesSet.has(x.id) ? TYPE_COLOR.caserne : x.id === replay.courant ? '#131A22' : replay.front.includes(x.id) ? STATUS.serious : replay.vus.has(x.id) ? levelColor(d.niveau[x.id], d.niveau_max) : '#DAD6CD')
+    if (notion === 'reach') return (x: any) => (sourcesSet.has(x.id) ? TYPE_COLOR.caserne : levelColor(d.niveau[x.id], d.niveau_max))
+    if (notion === 'weak') return (x: any) => compColor(rangFaible.get(x.id) ?? 99)
+    return (x: any) => compColor(rangForte.get(x.id) ?? 99)
+  }, [r.data, notion, replay, rangFaible, rangForte])
 
   if (g.error) return <ErrorBox error={g.error} onRetry={g.reload} />
   const d = r.data
@@ -87,86 +103,106 @@ export default function Access() {
     if (mode === 'chemin') { setSel(xs => (xs.length >= 2 ? [id] : [...xs, id])); setMh(null) }
   }
   const rings = notion === 'reach' ? d?.non_atteignables : notion === 'weak' ? d?.isoles : d?.scc.slice(1).flat().slice(0, 200)
-  const paths = mh?.chemin ? [{ ids: mh.chemin, color: '#FFB547', animated: true }, ...(mh.chemin_plus_rapide.join() !== mh.chemin.join() ? [{ ids: mh.chemin_plus_rapide, color: '#2EE6D6', dashed: true, width: 2.5 }] : [])] : []
+  const paths = mh?.chemin ? [{ ids: mh.chemin, color: MAP.alt, animated: true }, ...(mh.chemin_plus_rapide.join() !== mh.chemin.join() ? [{ ids: mh.chemin_plus_rapide, color: '#131A22', dashed: true, width: 2.6 }] : [])] : []
+  const comps = notion === 'weak' ? d?.faible : notion === 'scc' ? d?.scc : null
+  const compsTriees = comps ? [...comps].sort((a, b) => b.length - a.length) : []
+  const N = NOTIONS[notion]
+
+  const legende = notion === 'reach' && d ? (
+    <>
+      <span className="flex items-center gap-2"><span className="mu">niveau BFS</span><span className="mono text-[12px]">0</span>
+        <i style={{ width: 90, height: 9, borderRadius: 3, background: `linear-gradient(90deg, ${LEVEL_RAMP.join(',')})` }} /><span className="mono text-[12px]">{d.niveau_max} arcs</span></span>
+      <LegendDot color={TYPE_COLOR.caserne} label="source (caserne)" />
+      <LegendDot color={STATUS.critical} label="non atteignable" />
+      {d.cycle && voirCycle && <LegendLine color={MAP.cycle} label="circuit orienté détecté" />}
+      {mh?.chemin && <><LegendLine color={MAP.alt} label="moins d’arcs (BFS)" /><LegendLine color="#131A22" label="plus rapide (Dijkstra)" dashed /></>}
+    </>
+  ) : d && comps ? (
+    <>
+      {compsTriees.slice(0, 7).map((c, k) => <LegendDot key={k} color={compColor(k)} label={<>composante {k + 1} · <b className="num">{c.length}</b> site{c.length > 1 ? 's' : ''}</>} />)}
+      {compsTriees.length > 7 && <LegendDot color={AUTRES} label={`${compsTriees.length - 7} autres`} />}
+    </>
+  ) : null
 
   return (
-    <div className="grid gap-3.5" style={{ gridTemplateColumns: '1fr 360px' }}>
-      <div className="grid gap-3.5 content-start">
-        <Card title={<>{NOTIONS[notion].t} <Pill kind="ok">{notion === 'reach' ? `${algo.toUpperCase()} multi-source` : notion === 'weak' ? 'BFS non orienté' : 'Tarjan'}</Pill></>}
+    <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_420px]">
+      <div className="grid gap-5 content-start min-w-0">
+        <Card fig="Figure 2" title={<>{notion === 'reach' ? `Accessibilité depuis les ${sources === 'casernes' ? 'casernes' : sources === 'hopitaux' ? 'hôpitaux' : 'casernes et hôpitaux'}` : N.t} <Pill kind="in">{N.algo(algo)}</Pill></>}
           right={<>
-            {notion === 'reach' && d && <span className="legend"><span><i style={{ background: lvlColor(0, 1) }} />niveau 0</span><span><i style={{ background: lvlColor(0.5, 1) }} />{Math.round(d.niveau_max / 2)}</span><span><i style={{ background: lvlColor(1, 1) }} />{d.niveau_max} arcs</span><span><i style={{ background: '#FF4D4D' }} />non atteignable</span></span>}
             <Seg value={algo} onChange={setAlgo} size="sm" options={[{ v: 'bfs', l: 'BFS' }, { v: 'dfs', l: 'DFS' }]} />
-            <select className="inp" value={sources} onChange={e => setSources(e.target.value)} style={{ padding: '3px 22px 3px 8px' }}>
-              <option value="casernes">casernes</option><option value="hopitaux">hôpitaux</option><option value="casernes,hopitaux">casernes + hôpitaux</option>
+            <select className="inp" value={sources} onChange={e => setSources(e.target.value)} aria-label="Sources">
+              <option value="casernes">depuis les casernes</option><option value="hopitaux">depuis les hôpitaux</option><option value="casernes,hopitaux">casernes + hôpitaux</option>
             </select>
           </>}>
+          {legende && <div className="legend mb-3">{legende}</div>}
           {g.data ? (
-            <NetworkCanvas sites={g.data.sites} routes={g.data.routes} decor={g.data.decor} height={500} nodeColor={nodeColor} rings={rings ?? []}
+            <NetworkCanvas sites={g.data.sites} routes={g.data.routes} decor={g.data.decor} height="clamp(380px, calc(100vh - 390px), 640px)" nodeColor={nodeColor} rings={rings ?? []}
               cycle={voirCycle ? d?.cycle : null} paths={paths} selected={sel} onSiteClick={onSite} labels={sel}
-              legend={<><LegendLine color="#FFB547" label="Chemin min. en arcs (BFS)" /><LegendLine color="#2EE6D6" label="Plus rapide (Dijkstra)" dashed /><LegendLine color="#FF5468" label="Circuit orienté détecté" /></>}
               overlay={mh && (
-                <div className="mapover" style={{ right: 50, top: 10, maxWidth: 380 }}>
-                  <div className="mu text-[11px] mb-1">Chemin minimisant le nombre d'arcs · BFS</div>
+                <div className="mapover" style={{ left: 12, top: 12, maxWidth: 440 }}>
+                  <div className="lbl mb-1.5">Chemin minimisant le nombre d’arcs (BFS)</div>
                   <PathChips path={mh.chemin} max={9} types={types} />
-                  <div className="mono mt-1.5 text-[11px]"><b style={{ color: '#FFB547' }}>{mh.arcs ?? '∞'} arcs</b> · {fmt(mh.duree)} min <span className="mu">· le plus rapide : {fmt(mh.duree_plus_rapide)} min</span></div>
+                  <div className="mt-2 text-[14px]"><b style={{ color: 'var(--ink)' }}>{mh.arcs ?? '∞'} arcs</b> · {fmt(mh.duree)} min <span className="mu">· le plus rapide : {fmt(mh.duree_plus_rapide)} min</span></div>
                 </div>
               )} />
-          ) : <Skeleton h={500} />}
+          ) : <Skeleton h={520} />}
           {d?.trace && (
             <div className="mt-3">
               <StepPlayer total={events.length} step={step ?? events.length} onStep={setStep} label={`étape ${step ?? events.length} / ${events.length}${d.trace.tronque ? ' (tronqué)' : ''}`} />
-              <div className="flex gap-1.5 items-center mt-2 text-[11.5px] flex-wrap">
-                <span className="mu">{algo === 'bfs' ? 'File' : 'Pile'} :</span>
-                {(replay?.front ?? []).slice(0, 14).map(x => <span key={x} className="chip">{x}</span>)}
-                {(replay?.taille ?? 0) > 14 && <span className="mu2">… {replay!.taille - 14} de plus</span>}
-                {!replay && <span className="mu2">lancez la lecture ▶ pour rejouer le parcours (ordre de visite : {d.ordre.slice(0, 8).join(', ')}…)</span>}
-                {replay && <span className="ml-auto mu">visités : <b className="mono text-white">{replay.vus.size}</b></span>}
+              <div className="flex gap-1.5 items-center mt-2.5 text-[13.5px] flex-wrap">
+                <span className="mu font-medium">{algo === 'bfs' ? 'File (FIFO)' : 'Pile (LIFO)'} :</span>
+                {(replay?.front ?? []).slice(0, 14).map(x => <IdChip key={x} id={x} types={types} />)}
+                {(replay?.taille ?? 0) > 14 && <span className="mu">… {replay!.taille - 14} de plus</span>}
+                {!replay && <span className="mu">lancez la lecture ▶ pour rejouer le parcours · ordre de visite : <span className="mono">{d.ordre.slice(0, 8).join(', ')}…</span></span>}
+                {replay && <span className="ml-auto mu">sites visités : <b className="mono text-ink">{replay.vus.size}</b></span>}
               </div>
             </div>
           )}
         </Card>
       </div>
 
-      <div className="grid gap-3.5 content-start">
-        <Card title="Notion de connexité">
+      <div className="grid gap-5 content-start">
+        <Card title="Trois notions de connexité">
           <div className="notion">
             {(Object.keys(NOTIONS) as (keyof typeof NOTIONS)[]).map(k => (
               <button key={k} className={notion === k ? 'on' : ''} onClick={() => setNotion(k)}><b>{NOTIONS[k].t}</b><span>{NOTIONS[k].s}</span></button>
             ))}
           </div>
-          <div className="callout mt-2.5">{NOTIONS[notion].exp}</div>
+          <Callout kind="def" className="mt-3">{N.def} <span className="mu">→ {N.usage}</span></Callout>
         </Card>
-        <Card title="Résultats" right={d && <span className="mono mu text-[11px]">{fmtMs(d.temps_ms[algo])}</span>}>
-          {!d ? <Skeleton h={150} /> : (
-            <table className="tbl"><tbody>
-              <tr><td>Sites atteignables</td><td className="r mono"><b>{d.atteignables}</b> / {d.total}</td></tr>
-              <tr><td>Composantes faiblement connexes</td><td className="r mono">{d.nb_faible}</td></tr>
-              <tr><td>Composantes fortement connexes</td><td className="r mono">{d.nb_scc} <span className="mu2">(max {d.plus_grande_scc})</span></td></tr>
-              <tr><td>Composantes fibre (non orienté)</td><td className="r mono">{d.nb_fibre}</td></tr>
-              <tr><td>Circuit orienté <label className="mu2 text-[10.5px] ml-1"><input type="checkbox" checked={voirCycle} onChange={e => setVoirCycle(e.target.checked)} /> afficher</label></td>
+
+        <Card fig="Tableau 2" title="Résultats du diagnostic" right={d && <span className="mono mu text-[13px]" title="Temps du parcours seul">{fmtMs(d.temps_ms[algo])}</span>}>
+          {!d ? <Skeleton h={180} /> : (
+            <table className="tbl kv"><tbody>
+              <tr><td>Sites atteignables depuis les sources</td><td className="r"><b className="text-[16px]">{d.atteignables}</b> <span className="mu">/ {d.total}</span></td></tr>
+              <tr><td>Composantes faiblement connexes</td><td className="r font-semibold">{d.nb_faible}</td></tr>
+              <tr><td>Composantes fortement connexes</td><td className="r"><b>{d.nb_scc}</b> <span className="mu">(la plus grande : {d.plus_grande_scc})</span></td></tr>
+              <tr><td>Composantes du réseau de fibre</td><td className="r font-semibold">{d.nb_fibre}</td></tr>
+              <tr><td>Circuit orienté (DFS 3 couleurs) <label className="mu text-[12.5px] ml-1 cursor-pointer"><input type="checkbox" checked={voirCycle} onChange={e => setVoirCycle(e.target.checked)} /> voir</label></td>
                 <td className="r">{d.cycle ? <PathChips path={d.cycle} max={6} types={types} /> : <span className="mu">aucun</span>}</td></tr>
-              <tr><td>Sites isolés (degré 0)</td><td className="r">{d.isoles.length ? d.isoles.map(x => <span key={x} className="chip chip-h ml-1">{x}</span>) : <span className="mu">aucun</span>}</td></tr>
-              <tr><td>Non atteignables (casernes + hôpitaux)</td><td className="r mono">{d.non_atteignables_secours.length}</td></tr>
+              <tr><td>Sites isolés (degré 0)</td><td className="r">{d.isoles.length ? <span className="inline-flex gap-1 flex-wrap justify-end">{d.isoles.map(x => <span key={x} className="chip chip-ko">{x}</span>)}</span> : <span className="mu">aucun</span>}</td></tr>
+              <tr><td>Non atteignables depuis casernes + hôpitaux</td><td className="r font-semibold" style={{ color: d.non_atteignables_secours.length ? 'var(--ko)' : undefined }}>{d.non_atteignables_secours.length}</td></tr>
             </tbody></table>
           )}
-          {d?.cycle?.length === 3 && <div className="mu2 text-[11px] mt-2">Une rue à double sens u ↔ v forme déjà un circuit de longueur 2.</div>}
         </Card>
-        <Card title={<><MousePointerClick size={14} /> Chemin minimal en arcs</>} right={<button className={`btn btn-sm ${mode === 'chemin' ? 'btn-pri' : 'btn-gh'}`} onClick={() => { setMode(m => (m === 'chemin' ? 'aucun' : 'chemin')); setSel([]); setMh(null) }}>{mode === 'chemin' ? 'Annuler' : 'Choisir 2 sites'}</button>}>
-          <div className="mu text-[12px]">{mode === 'chemin' ? (sel.length === 0 ? 'Cliquez le site de départ sur la carte…' : sel.length === 1 ? `Départ ${sel[0]} — cliquez l'arrivée…` : `${sel[0]} → ${sel[1]}`) : 'BFS + reconstruction par les parents ; comparé au chemin le plus rapide (Dijkstra).'}</div>
-          {mh && !mh.chemin && <div className="banner ko mt-2">Aucun chemin orienté de {mh.u} vers {mh.v}</div>}
+
+        <Card title={<><MousePointerClick size={18} /> Itinéraire minimal en nombre d’arcs</>} right={<button className={`btn btn-sm ${mode === 'chemin' ? 'btn-on' : 'btn-gh'}`} onClick={() => { setMode(m => (m === 'chemin' ? 'aucun' : 'chemin')); setSel([]); setMh(null) }}>{mode === 'chemin' ? 'Annuler' : 'Choisir 2 sites'}</button>}>
+          <div className="text-[14px] text-ink2">{mode === 'chemin' ? (sel.length === 0 ? 'Cliquez le départ sur la carte…' : sel.length === 1 ? <>Départ <span className="mono">{sel[0]}</span> — cliquez l’arrivée…</> : <><span className="mono">{sel[0]}</span> → <span className="mono">{sel[1]}</span></>) : 'BFS vs Dijkstra entre deux sites.'}</div>
+          {mh && !mh.chemin && <div className="banner ko mt-2.5">Aucun chemin orienté de {mh.u} vers {mh.v}</div>}
         </Card>
-        <Card title={<><Radar size={14} /> Seuil d'intervention</>} right={<span className="mono" style={{ color: '#FFB547' }}>{seuil} min</span>}>
-          <input type="range" min={2} max={30} value={seuil} onChange={e => setSeuil(Number(e.target.value))} />
-          <div className="mt-2 mu">{d?.hors_delai.length ?? '—'} quartier(s) hors délai depuis toute caserne ou tout hôpital</div>
-          <div className="flex flex-wrap gap-1 mt-1.5">{(d?.hors_delai ?? []).slice(0, 24).map(h => <span key={h.id} className="chip" title={`${fmt(h.temps)} min`}>{h.id} <span className="mu2">{fmt(h.temps, 1)}</span></span>)}</div>
+
+        <Card title={<><Timer size={18} /> Seuil d’intervention T</>} right={<span className="big" style={{ fontSize: 22 }}>{seuil}<small>min</small></span>}>
+          <input type="range" min={2} max={30} value={seuil} onChange={e => setSeuil(Number(e.target.value))} aria-label="Seuil T en minutes" />
+          <div className="mt-2 text-[14px]"><b>{d?.hors_delai.length ?? '—'}</b> quartier(s) à plus de {seuil} min des secours</div>
+          <div className="flex flex-wrap gap-1.5 mt-2">{(d?.hors_delai ?? []).slice(0, 24).map(h => <span key={h.id} className="chip" title={`${fmt(h.temps)} min`}>{h.id} <span className="mu">{fmt(h.temps, 1)}</span></span>)}</div>
         </Card>
+
         {d && d.nb_fibre > 1 && (
           <Card title="Composantes du réseau de fibre">
-            {d.fibre_composantes.map((c, k) => <div key={k} className="text-[11.5px] py-1 border-b border-[#141d35]"><span className="mono mu2 mr-2">#{k + 1}</span><b className="mono">{c.length}</b> site(s) {c.length < 6 && <span className="mu">: {c.join(', ')}</span>}</div>)}
+            {[...d.fibre_composantes].sort((a, b) => b.length - a.length).map((c, k) => <div key={k} className="text-[14px] py-1.5" style={{ borderBottom: '1px solid var(--hair)' }}><span className="mono mu mr-2">#{k + 1}</span><b className="num">{c.length}</b> site(s) {c.length < 6 && <span className="mu">: <span className="mono">{c.join(', ')}</span></span>}</div>)}
           </Card>
         )}
       </div>
-      <InfoCallout title="Pourquoi trois notions ?">Pour un réseau routier <b>orienté</b>, la connexité ordinaire (faible) peut masquer des sens uniques : un quartier peut être relié physiquement au reste de la ville sans être atteignable depuis une caserne, ou atteignable sans pouvoir en repartir.</InfoCallout>
     </div>
   )
 }

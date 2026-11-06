@@ -82,6 +82,12 @@ class ScenariosReq(BaseModel):
     personnalises: list[ScenarioPerso] = []
 
 
+class LabReq(Ctx):
+    algo: str = "dijkstra"
+    source: str | None = Field(None, description="site de départ (défaut : première caserne)")
+    cible: str | None = Field(None, description="site d'arrivée (facultatif : chemin reconstruit à la fin)")
+
+
 class GenReq(BaseModel):
     preset: str = "realiste"
     params: dict = {}

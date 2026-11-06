@@ -51,7 +51,8 @@ python tasks.py demo
 ```
 
 `python tasks.py demo` fait aussi les étapes 3 si elles manquent. Sous Linux/macOS, `make demo` est équivalent.
-Pour arrêter : Ctrl+C dans le terminal.
+Pour arrêter : Ctrl+C dans le terminal. Node.js ne sert qu'à **construire** l'interface : si `npm` est introuvable mais
+que `ui/dist` existe déjà, `python tasks.py demo` réutilise l'interface construite.
 
 Autres cibles : `make data | test | bench | figures | api | ui | build` (= `python tasks.py <cible>`).
 En développement : `novapolis serve` (API :8000) puis `npm --prefix ui run dev` (UI :5173).
@@ -66,7 +67,7 @@ novapolis access     --data data/novapolis --sources casernes --scenario normal
 novapolis access     --data data/novapolis --mode scc
 novapolis minhop     --data data/mini --from C2 --to H1
 novapolis cycles     --data data/mini
-novapolis route      --data data/novapolis --demande D-07 --algo all --scenario fermeture_axe
+novapolis route      --data data/novapolis --demande D-02 --algo all --scenario fermeture_axe
 novapolis routes     --data data/novapolis --scenario fermeture_axe --export out/routes.csv
 novapolis negcycle   --data data/negatif_accessible --source S --algo bellman-ford
 novapolis negcycle   --data data/negatif_inaccessible --source S --algo all
@@ -142,13 +143,38 @@ scripts/make_figures.py   CSV de benchmarks → figures matplotlib (reports/figu
 
 ## Interface graphique
 
-Dix pages (barre latérale) : Vue d'ensemble · Données & validation (studio de génération, import, éditeur de tables,
-constructeur de scénario) · Accessibilité M1 (trois notions de connexité, rejeu BFS/DFS, seuil T) · Itinéraires M2
-(itinéraire animé, comparaison des 3 algorithmes, avant/après, limites du modèle) · Circuits absorbants M3 (deux
-laboratoires + bac à sable) · Réseau de fibre M4 (Kruskal vs Prim, Union–Find pas à pas, étude de panne) ·
-Scénarios M5 (5 indicateurs, barres, radar, carte des différences) · Benchmarks (progression SSE) ·
-Reproductibilité · Équipe. Contexte global (jeu, scénario, période) dans l'URL ; **Ctrl+K** palette de commandes ;
-**Mode démo** : visite guidée en 8 étapes (← / →).
+Thème clair « papier académique » pensé pour la projection : titres en serif, bleu marine du sujet, tableaux à filets,
+encadrés *Définition / Remarque / Limites*, figures et tableaux numérotés, couleurs validées pour les daltoniens.
+Douze pages numérotées comme un sommaire :
+
+1. **Vue d'ensemble** — les trois questions du sujet (§1) et leurs réponses chiffrées, carte, points d'attention.
+2. **Données & validation** — jeux fournis (§2.4), validateur, aperçu des CSV ; onglets générateur, import / édition /
+   constructeur de scénario, `SCHEMA.md`.
+3. **M1 Accessibilité** — trois notions de connexité (définitions), rejeu BFS/DFS pas à pas, chemin minimal en arcs, seuil T.
+4. **M2 Itinéraires** — itinéraire animé, avant / après, Dijkstra = Bellman–Ford = Floyd–Warshall, limites du modèle, toutes les demandes.
+5. **M3 Circuits absorbants** — tests A et B (−∞), bac à sable.
+6. **M4 Fibre** — Kruskal vs Prim, égalités de coût, Union–Find pas à pas, étude de panne.
+7. **M5 Scénarios** — tableau des 5 indicateurs × 6 scénarios, petits multiples, carte des différences.
+8. **Algorithmes en direct** — choisir BFS, DFS, Dijkstra, Bellman–Ford, Floyd–Warshall, Kruskal ou Prim, le graphe,
+   la source et la cible, puis voir l'algorithme tourner pas à pas (file, pile, tas, Union–Find ou matrice affichés,
+   une phrase par étape). C'est la trace de l'exécution Python (`POST /lab/run`) qui est rejouée, jamais un algorithme JavaScript.
+9. **Expériences** — benchmarks (progression en direct), log-log vs théorie.
+10. **Reproductibilité** — chaque résultat → sa commande, graines, empreintes SHA-256.
+11. **Équipe** — lue dans `CONTRIBUTIONS.md` (modifier ce seul fichier).
+12. **Bilan & conformité** — grille d'évaluation du sujet (§7), preuves recalculées en direct, recommandations.
+
+Contexte global (jeu, scénario, période) dans l'URL ; **Ctrl+K** palette de commandes.
+
+### Jour de la soutenance
+
+1. **Windows : double-cliquer `presentation.cmd`** (à la racine du projet) : il démarre l'API et ouvre le navigateur
+   sur http://127.0.0.1:8000 ; Ctrl+C dans sa fenêtre pour arrêter. Ailleurs, environnement activé : `novapolis serve`.
+   Une fois `ui/dist` construit, **seul Python est nécessaire** (polices embarquées, aucune ressource externe :
+   fonctionne hors ligne). Dans l'invite de commandes (cmd), les chemins s'écrivent avec `\` : `.venv\Scripts\novapolis.exe serve`.
+2. Cliquer **Présenter** : plein écran, sommaire replié, visite guidée en **12 étapes** (← / → ou télécommande
+   PageUp / PageDown, **Échap** pour quitter). L'étape 5 choisit automatiquement la demande la plus retardée par la
+   fermeture des ponts (D-02 : +6,56 min, +89,5 %) ; l'étape 8 simule la panne de fibre du scénario `panne_fibre`.
+3. Texte trop petit au fond de la salle : **Ctrl +** / **Ctrl −** (la mise en page s'adapte).
 
 Types TypeScript des requêtes : `npm --prefix ui run gen:types` (openapi-typescript, API démarrée).
 
@@ -158,7 +184,7 @@ Types TypeScript des requêtes : `npm --prefix ui run gen:types` (openapi-typesc
 pytest            # ou make test
 ```
 
-144 tests : jeu `mini` comparé aux calculs à la main, 50 graphes aléatoires recoupés avec networkx (Dijkstra =
+151 tests : jeu `mini` comparé aux calculs à la main, traces du laboratoire (rejeu = résultat, −∞ comme le module 3), 50 graphes aléatoires recoupés avec networkx (Dijkstra =
 Bellman–Ford = Floyd–Warshall), MST (Kruskal = Prim = networkx, forêts, égalités), circuits absorbants A/B, cas limites
 (graphe vide, un sommet, source = cible, cible inaccessible, boucle, arcs parallèles, tous les arcs fermés, chaîne de
 20 000 sommets), validateur (chaque type d'erreur), immuabilité des scénarios, UI = CLI octet par octet.

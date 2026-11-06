@@ -89,4 +89,17 @@ export interface GenResult {
   enregistre: boolean; existe: boolean; chemin?: string
 }
 export interface Preset { id: string; label: string; params: Record<string, any> }
+
+/** Laboratoire : un événement de la trace Python (identifiants de sites déjà résolus). */
+export interface LabEvent {
+  type: string; sommet?: string; depuis?: string; niveau?: number; dist?: Num; w?: number; ancien?: Num; passe?: number; passes?: number
+  file?: string[]; pile?: string[]; taille?: number; pivot?: string; k?: number; maj?: [number, number][] | null; matrice?: Num[][] | null
+  arete?: number; u?: string; v?: string; cout?: number; acceptee?: boolean; composantes?: number | null; tas?: number; relaxables?: string[]
+}
+export interface LabResult {
+  dataset: string; algo: string; scenario: string; periode: string | null; oriente: boolean; source: string | null; cible: string | null
+  noeuds: SiteP[]; aretes: { id: number; u: string; v: string; w: number }[]; events: LabEvent[]; tronque: boolean; temps_ms: number
+  resultat: { dist?: Record<string, Num>; niveau?: Record<string, number>; atteints?: number; passes?: number | null; circuit_absorbant?: boolean; relaxables?: string[]; aretes?: [string, string][]; cout?: number; composantes?: number }
+  chemin: string[] | null; cout_chemin: Num
+}
 export interface TablePage { fichier: string; entete: string[]; total: number; offset: number; lignes: { ligne: number; valeurs: string[] }[] }

@@ -1,15 +1,15 @@
-// Page 6 — Réseau de fibre (M4) : Kruskal vs Prim, égalités de coût, pas à pas + Union–Find, étude de panne.
+// Page 6 — Module 4 : Kruskal vs Prim, égalités de coût, pas à pas + Union–Find, étude de panne.
 import { RotateCcw, Scissors } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
-import NetworkCanvas, { LegendLine, pairKey } from '../components/NetworkCanvas'
-import { Card, ErrorBox, Pill, Seg, Skeleton } from '../components/ui'
+import NetworkCanvas, { LegendDot, LegendLine, pairKey } from '../components/NetworkCanvas'
+import { Callout, Card, ErrorBox, Pill, Seg, Skeleton } from '../components/ui'
 import { LabGraph, StepPlayer } from '../components/widgets'
 import { api } from '../lib/api'
 import { fmt, fmtInt, fmtMs } from '../lib/format'
 import { useGraph, useLastCalc } from '../lib/hooks'
 import { useApi, useStore } from '../lib/store'
 import type { PanneResult } from '../lib/types'
-import { TYPE_COLOR } from '../theme/tokens'
+import { MAP, STATUS, TYPE_COLOR } from '../theme/tokens'
 
 export default function Fibre() {
   const s = useStore()
@@ -24,7 +24,7 @@ export default function Fibre() {
   const couper = async (edge: string) => {
     try { setPanne(await api.panne(s.dataset, edge, algo, s.scenario)) } catch (e: any) { s.toast('error', e.message) }
   }
-  // mode démo : panne automatique du tronçon déclaré dans le scénario « panne_fibre »
+  // mode présentation : panne automatique du tronçon déclaré dans le scénario « panne_fibre »
   useEffect(() => {
     if (s.param('panne') !== 'auto' || !mst.data) return
     api.table(s.dataset, 'scenarios.csv', 0, 1000).then(t => {
@@ -50,10 +50,10 @@ export default function Fibre() {
   }, [res, step, events, ids])
 
   const compU = useMemo(() => new Set(panne?.composante_u ?? []), [panne])
-  const nodeColor = panne ? (x: any) => (x.type !== 'quartier' ? TYPE_COLOR[x.type] : compU.has(x.id) ? '#2EE6D6' : '#A78BFA') : undefined
+  const nodeColor = panne ? (x: any) => (x.type !== 'quartier' ? TYPE_COLOR[x.type] : compU.has(x.id) ? MAP.compA : MAP.compB) : undefined
   const edges = panne ? [
-    { u: panne.coupee.u, v: panne.coupee.v, color: '#FF4D4D', dashed: true, width: 3 },
-    ...(panne.raccordement ? [{ u: panne.raccordement.u, v: panne.raccordement.v, color: '#3DDC97', dashed: true, glow: true, width: 3.4 }] : []),
+    { u: panne.coupee.u, v: panne.coupee.v, color: MAP.cut, dashed: true, width: 3.4 },
+    ...(panne.raccordement ? [{ u: panne.raccordement.u, v: panne.raccordement.v, color: MAP.repair, dashed: true, glow: true, width: 3.6 }] : []),
   ] : []
   const mstMap = panne ? new Set([...accepted].filter(k => k !== pairKey(panne.coupee.u, panne.coupee.v))) : accepted
   const rings = (m?.non_raccordes ?? []).flat().slice(0, 300)
@@ -68,95 +68,102 @@ export default function Fibre() {
     const membres = uf.map((_, i) => i).filter(i => r.has(racine(i))).slice(0, 70)
     const set = new Set(membres)
     return {
-      nodes: membres.map(i => ({ id: ids[i], x: 0, y: 0, color: r.has(i) && uf[i] === i ? '#FFB547' : i === cur.u || i === cur.v ? '#FF5468' : '#2EE6D6' })),
-      edges: membres.filter(i => uf[i] !== i && set.has(uf[i])).map(i => ({ id: `p${i}`, source: ids[uf[i]], target: ids[i], color: '#2A3A60' })),
+      nodes: membres.map(i => ({ id: ids[i], x: 0, y: 0, color: r.has(i) && uf[i] === i ? '#1F4E79' : i === cur.u || i === cur.v ? STATUS.critical : '#9AA3B2' })),
+      edges: membres.filter(i => uf[i] !== i && set.has(uf[i])).map(i => ({ id: `p${i}`, source: ids[uf[i]], target: ids[i], color: '#9AA3B2' })),
     }
   }, [cur, algo, ids])
 
   if (g.error) return <ErrorBox error={g.error} onRetry={g.reload} />
   const fenetre = step === null ? events.slice(0, 12) : events.slice(Math.max(0, step - 6), Math.max(0, step - 6) + 12)
   const base = step === null ? 0 : Math.max(0, step - 6)
+  const milieu = res?.aretes[Math.floor((res?.aretes.length ?? 0) / 2)]?.label
 
   return (
-    <div className="grid gap-3.5" style={{ gridTemplateColumns: '1fr 370px' }}>
-      <div className="grid gap-3.5 content-start">
-        <Card title={<>Arbre couvrant minimal <Pill kind="cy">{algo === 'kruskal' ? 'Kruskal' : 'Prim'}</Pill>{(m?.non_raccordes.length ?? 0) > 0 && <Pill kind="am">forêt : {m!.composantes.length} composantes</Pill>}</>}
-          right={<><span className="legend"><LegendLine color="#2EE6D6" label="ACM" /><LegendLine color="#16384a" label="candidat" /><LegendLine color="#FF4D4D" label="interdit / panne" dashed />{panne && <LegendLine color="#3DDC97" label="raccordement" dashed />}</span>
-            <Seg value={algo} onChange={setAlgo} size="sm" options={[{ v: 'kruskal', l: 'Kruskal' }, { v: 'prim', l: 'Prim' }]} /></>}>
+    <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_440px]">
+      <div className="grid gap-5 content-start min-w-0">
+        <Card fig="Figure 5" title={<>{(m?.non_raccordes.length ?? 0) > 0 ? 'Forêt couvrante de poids minimal' : 'Arbre couvrant de poids minimal'} <Pill kind="in">{algo === 'kruskal' ? 'Kruskal' : 'Prim'}</Pill>{(m?.non_raccordes.length ?? 0) > 0 && <Pill kind="am">graphe non connexe : {m!.composantes.length} composantes</Pill>}</>}
+          right={<Seg value={algo} onChange={setAlgo} size="sm" options={[{ v: 'kruskal', l: 'Kruskal' }, { v: 'prim', l: 'Prim' }]} />}>
+          <div className="legend mb-3">
+            <LegendLine color={MAP.mst} label="tronçon retenu" />
+            <LegendLine color="#A4C6EE" label="tronçon candidat" width={2} />
+            <LegendLine color={MAP.closed} label="interdit ou en panne" dotted />
+            {rings.length > 0 && <LegendDot color={STATUS.critical} ring label="site non raccordé" />}
+            {panne && <><LegendLine color={MAP.cut} label="tronçon coupé" dashed /><LegendLine color={MAP.repair} label="raccordement" dashed /><LegendDot color={MAP.compA} label="morceau 1" /><LegendDot color={MAP.compB} label="morceau 2" /></>}
+          </div>
           {g.data ? (
-            <NetworkCanvas sites={g.data.sites} routes={g.data.routes} fibre={g.data.fibre} decor={g.data.decor} showFibre dimRoads mst={mstMap} height={500}
+            <NetworkCanvas sites={g.data.sites} routes={g.data.routes} fibre={g.data.fibre} decor={g.data.decor} showFibre dimRoads mst={mstMap} height="clamp(380px, calc(100vh - 400px), 640px)"
               nodeColor={nodeColor} edges={edges} rings={rings} labels={panne ? [panne.coupee.u, panne.coupee.v, ...(panne.raccordement ? [panne.raccordement.u, panne.raccordement.v] : [])] : []}
-              onFibreClick={f => accepted.has(pairKey(f.u, f.v)) ? couper(`${f.u}-${f.v}`) : s.toast('info', `${f.u}–${f.v} n'est pas dans l'arbre : cliquez un tronçon cyan`)}
-              overlay={res && <div className="mapover legend" style={{ left: 10, bottom: 10, gap: 16 }}>
-                <span><b className="mono text-white text-[14px]">{fmtInt(res.cout)} k€</b> coût total</span><span><b className="mono text-white">{res.nb_aretes}</b> tronçons</span>
-                <span><b className="mono text-white">{res.composantes}</b> composante(s)</span><span><b className="mono" style={{ color: '#FF7A88' }}>{m?.exclus.length}</b> exclus</span></div>} />
-          ) : <Skeleton h={500} />}
+              onFibreClick={f => accepted.has(pairKey(f.u, f.v)) ? couper(`${f.u}-${f.v}`) : s.toast('info', `${f.u}–${f.v} n’est pas dans l’arbre : cliquez un tronçon bleu`)}
+              overlay={res && <div className="mapover flex gap-5 text-[14px]" style={{ left: 12, bottom: 12 }}>
+                <span><b className="text-[18px] num">{fmtInt(res.cout)}</b> <span className="mu">k€ au total</span></span><span><b className="num">{res.nb_aretes}</b> <span className="mu">tronçons</span></span>
+                <span><b className="num">{res.composantes}</b> <span className="mu">composante(s)</span></span><span><b className="num" style={{ color: 'var(--ko)' }}>{m?.exclus.length}</b> <span className="mu">exclus</span></span></div>} />
+          ) : <Skeleton h={520} />}
           {res?.trace && <div className="mt-3"><StepPlayer total={events.length} step={step ?? events.length} onStep={setStep} label={`${step ?? events.length} / ${events.length} ${algo === 'kruskal' ? 'arêtes examinées' : 'arêtes ajoutées'}`} /></div>}
         </Card>
         {foret && (
-          <Card title={<>Forêt Union–Find <span className="mu font-medium">· arbre(s) contenant {cur?.label}</span></>} right={<span className="legend"><span><i style={{ background: '#FFB547' }} />racine</span><span><i style={{ background: '#FF5468' }} />extrémités</span></span>}>
-            <LabGraph nodes={foret.nodes} edges={foret.edges} layout="breadthfirst" height={220} />
-            <div className="mu2 text-[11px] mt-1.5">Compression de chemin + union par rang : les arbres restent très plats (hauteur ≤ log n).</div>
+          <Card title={<>Forêt Union–Find <span className="mu font-normal text-[15px]">· arbre(s) contenant {cur?.label}</span></>} right={<div className="legend"><span><i style={{ background: '#fff', boxShadow: 'inset 0 0 0 2.5px #1F4E79' }} />racine</span><span><i style={{ background: '#fff', boxShadow: `inset 0 0 0 2.5px ${STATUS.critical}` }} />extrémités de l’arête</span></div>}>
+            <LabGraph nodes={foret.nodes} edges={foret.edges} layout="breadthfirst" height={240} />
+            <div className="caption mt-2">Compression de chemin + union par rang : <span className="math">O(α(n))</span> amorti.</div>
           </Card>
         )}
       </div>
 
-      <div className="grid gap-3.5 content-start">
-        <Card title="Kruskal vs Prim" right={m?.cout_identique !== undefined && (m.cout_identique ? <Pill kind="ok">✓ coût identique</Pill> : <Pill kind="ko">✗ coûts différents</Pill>)}>
-          {!m ? <Skeleton h={120} /> : (
+      <div className="grid gap-5 content-start">
+        <Card fig="Tableau 5" title="Kruskal et Prim" right={m?.cout_identique !== undefined && (m.cout_identique ? <Pill kind="ok">✓ coût identique</Pill> : <Pill kind="ko">✗ coûts différents</Pill>)}>
+          {!m ? <Skeleton h={140} /> : (
             <>
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-2 gap-3">
                 {(['kruskal', 'prim'] as const).map(a => (
-                  <button key={a} className="fileC text-left" style={algo === a ? { borderColor: '#17585a' } : undefined} onClick={() => setAlgo(a)}>
-                    <b>{a === 'kruskal' ? 'Kruskal' : 'Prim'}</b><div className="mu2 text-[10.5px]">{a === 'kruskal' ? 'tri + Union–Find' : 'tas binaire'}</div>
-                    <div className="big mt-1.5 text-[18px]">{fmtInt(m[a]?.cout)}<small className="mu text-[11px]"> k€</small></div>
-                    <div className="mono mu text-[11px]">{m[a]?.nb_aretes} arêtes · <span style={{ color: '#2EE6D6' }}>{fmtMs(m[a]?.temps_ms)}</span></div>
+                  <button key={a} className={`fileC text-left ${algo === a ? 'on' : ''}`} onClick={() => setAlgo(a)}>
+                    <b className="text-[15px]">{a === 'kruskal' ? 'Kruskal' : 'Prim'}</b><div className="caption">{a === 'kruskal' ? <>tri + Union–Find · <span className="math">O(|E| log |E|)</span></> : <>tas binaire · <span className="math">O(|E| log |V|)</span></>}</div>
+                    <div className="big mt-2">{fmtInt(m[a]?.cout)}<small>k€</small></div>
+                    <div className="mu text-[13px] mt-0.5">{m[a]?.nb_aretes} tronçons · <span className="mono">{fmtMs(m[a]?.temps_ms)}</span></div>
                   </button>
                 ))}
               </div>
-              <div className="callout mt-2.5">
-                {m.meme_ensemble ? <>Les deux algorithmes retiennent <b>exactement les mêmes tronçons</b>.</> : <><b>{m.diff_kruskal?.length} tronçon(s) différent(s)</b> à coût total égal : en cas d'égalité de coûts, Kruskal départage par l'ordre du fichier, Prim par l'ordre d'insertion dans le tas.</>}
-                {m.egalites.echange && <> Plusieurs ACM existent : remplacer <span className="chip">{m.egalites.echange.retirer.label}</span> par <span className="chip">{m.egalites.echange.ajouter.label}</span> (même coût {fmt(m.egalites.echange.cout, 0)} k€) donne un autre arbre de même coût — l'arête ajoutée a le même poids que l'arête maximale du cycle qu'elle crée.</>}
-                {m.egalites.unique && <> L'ACM est <b>unique</b> (aucun échange de même coût).</>}
-              </div>
+              <Callout kind={m.meme_ensemble ? 'ok' : 'rem'} title="Égalités de coût" className="mt-3">
+                {m.meme_ensemble ? <>Mêmes tronçons pour les deux algorithmes.</> : <><b>{m.diff_kruskal?.length} tronçon(s) différent(s)</b>, même coût total.</>}
+                {m.egalites.echange && <> Échange possible : <span className="chip">{m.egalites.echange.retirer.label}</span> ↔ <span className="chip">{m.egalites.echange.ajouter.label}</span> ({fmt(m.egalites.echange.cout, 0)} k€) ⇒ plusieurs arbres minimaux.</>}
+                {m.egalites.unique && <> Arbre minimal <b>unique</b>.</>}
+              </Callout>
               {!m.meme_ensemble && (
-                <div className="mt-2 text-[11.5px]">{m.diff_kruskal?.slice(0, 5).map((a, k) => (
-                  <div key={k} className="flex items-center gap-2 py-0.5"><span className="chip">{a.label} · {fmt(a.cost, 0)}</span><span className="mu2">↔</span><span className="chip">{m.diff_prim?.[k]?.label} · {fmt(m.diff_prim?.[k]?.cost ?? null, 0)}</span></div>
-                ))}</div>
+                <table className="tbl compact mt-3"><thead><tr><th>Kruskal</th><th className="r">k€</th><th>Prim</th><th className="r">k€</th></tr></thead>
+                  <tbody>{m.diff_kruskal?.slice(0, 5).map((a, k) => (
+                    <tr key={k}><td className="mono">{a.label}</td><td className="r">{fmt(a.cost, 0)}</td><td className="mono">{m.diff_prim?.[k]?.label}</td><td className="r">{fmt(m.diff_prim?.[k]?.cost ?? null, 0)}</td></tr>
+                  ))}</tbody></table>
               )}
             </>
           )}
         </Card>
 
-        <Card title={<>Étapes {algo === 'kruskal' ? 'Kruskal' : 'Prim'} <span className="mu font-medium">· {algo === 'kruskal' ? 'arêtes triées' : 'tas / frontière'}</span></>}>
-          {fenetre.map((e, k) => (
-            <div key={k} className={`step ${step !== null && base + k === step - 1 ? 'cur' : ''}`}>
-              <span className="mono mu2">{base + k + 1}</span>
-              <span className="mono">{e.label} <span className="mu">{fmt(e.cout ?? null, 0)} k€</span>{algo === 'prim' && e.tas !== undefined && <span className="mu2"> · tas {e.tas}</span>}{e.type === 'racine' && <span className="mu"> nouvelle racine</span>}</span>
-              {e.type === 'racine' ? <span className="mu2">—</span> : e.acceptee ? <span style={{ color: '#3DDC97' }}>✓ ajoutée</span> : <span style={{ color: '#FF7A88' }}>✗ cycle</span>}
-            </div>
-          ))}
-          <div className="mu2 text-[11px] mt-1.5">{algo === 'kruskal' ? 'Union–Find : compression de chemin + union par rang' : 'Tas binaire (heapq), départage des égalités par ordre d’insertion'}</div>
-        </Card>
-
-        <Card title={<><Scissors size={14} /> Étude de panne</>} glow={panne ? '#1b5a45' : undefined}>
+        <Card title={<><Scissors size={18} /> Étude de panne</>} glow={panne ? 'var(--ok-line)' : undefined} style={{ order: panne ? -1 : 0 }}>
           {panne ? (
             <>
               <div className="ba">
-                <div><div className="lbl">Tronçon coupé</div><div className="mono font-semibold" style={{ color: '#FF7A88' }}>{panne.coupee.label}</div><div className="mono mu text-[11px]">{fmt(panne.coupee.cost, 0)} k€</div></div>
-                <div className="text-center mu2">→</div>
-                <div><div className="lbl">Raccordement</div>{panne.raccordement ? <><div className="mono font-semibold" style={{ color: '#3DDC97' }}>{panne.raccordement.label}</div><div className="mono mu text-[11px]">{fmt(panne.raccordement.cost, 0)} k€</div></> : <div className="mono" style={{ color: '#FF7A88' }}>aucun disponible</div>}</div>
+                <div><div className="lbl">Tronçon coupé</div><div className="mono font-semibold mt-1" style={{ color: 'var(--ko)' }}>{panne.coupee.label}</div><div className="mu text-[13px]">{fmt(panne.coupee.cost, 0)} k€</div></div>
+                <div className="text-center mu2 text-[20px]">→</div>
+                <div><div className="lbl">Raccordement</div>{panne.raccordement ? <><div className="mono font-semibold mt-1" style={{ color: 'var(--ok)' }}>{panne.raccordement.label}</div><div className="mu text-[13px]">{fmt(panne.raccordement.cost, 0)} k€</div></> : <div className="mono mt-1" style={{ color: 'var(--ko)' }}>aucun disponible</div>}</div>
               </div>
-              <div className="flex gap-2 mt-2.5 flex-wrap">
-                <Pill kind="am">Δ coût {panne.delta >= 0 ? '+' : ''}{fmt(panne.delta, 0)} k€</Pill><Pill kind="cy">nouveau total {fmtInt(panne.nouveau_cout)} k€</Pill>
+              <div className="flex gap-2 mt-3 flex-wrap">
+                <Pill kind="am">Δ coût {panne.delta >= 0 ? '+' : ''}{fmt(panne.delta, 0)} k€</Pill><Pill kind="in">nouveau total {fmtInt(panne.nouveau_cout)} k€</Pill>
                 <Pill kind={panne.reconnecte ? 'ok' : 'ko'}>{panne.composante_u.length} + {panne.composante_v.length} sites {panne.reconnecte ? 'reconnectés' : 'séparés'}</Pill>
               </div>
             </>
-          ) : <div className="mu mb-2.5">Cliquez sur un tronçon de l'ACM (cyan) pour simuler sa panne et calculer le raccordement disponible le moins coûteux (graphe initial, tronçon en panne exclu).</div>}
-          <button className={`btn w-full justify-center mt-2.5 ${panne ? 'btn-gh' : 'btn-pri'}`} disabled={!res}
-            onClick={() => (panne ? setPanne(null) : res && couper(res.aretes[Math.floor(res.aretes.length / 2)].label))}>
-            {panne ? <><RotateCcw size={12} />Réinitialiser</> : <>Simuler une panne ({res?.aretes[Math.floor((res?.aretes.length ?? 0) / 2)]?.label})</>}
+          ) : <div className="text-[14px] text-ink2">Cliquez un tronçon bleu de la carte.</div>}
+          <button className={`btn w-full justify-center mt-3 ${panne ? 'btn-gh' : 'btn-pri'}`} disabled={!res}
+            onClick={() => (panne ? setPanne(null) : milieu && couper(milieu))}>
+            {panne ? <><RotateCcw size={14} />Réinitialiser</> : <><Scissors size={14} />Simuler une panne ({milieu})</>}
           </button>
+        </Card>
+
+        <Card title={<>Étapes de {algo === 'kruskal' ? 'Kruskal' : 'Prim'}</>}>
+          {fenetre.map((e, k) => (
+            <div key={k} className={`step ${step !== null && base + k === step - 1 ? 'cur' : ''}`}>
+              <span className="mono mu text-right">{base + k + 1}</span>
+              <span className="mono text-[13.5px]">{e.label} <span className="mu">{fmt(e.cout ?? null, 0)} k€</span>{algo === 'prim' && e.tas !== undefined && <span className="mu2"> · tas {e.tas}</span>}{e.type === 'racine' && <span className="mu"> nouvelle racine</span>}</span>
+              {e.type === 'racine' ? <span className="mu2">—</span> : e.acceptee ? <span className="font-semibold" style={{ color: 'var(--ok)' }}>✓ ajoutée</span> : <span className="font-semibold" style={{ color: 'var(--ko)' }}>✗ cycle</span>}
+            </div>
+          ))}
         </Card>
       </div>
     </div>

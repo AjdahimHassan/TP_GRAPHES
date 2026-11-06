@@ -12,7 +12,7 @@ import os
 import time
 
 from novapolis.algorithms.mst import kruskal, prim, repair_after_failure, tie_analysis
-from novapolis.algorithms.negative_cycles import negcycle_bellman_ford, negcycle_floyd
+from novapolis.algorithms.negative_cycles import _propager_moins_inf, negcycle_bellman_ford, negcycle_floyd
 from novapolis.algorithms.shortest_paths import (
     INF,
     bellman_ford,
@@ -25,6 +25,7 @@ from novapolis.algorithms.shortest_paths import (
 from novapolis.algorithms.trace import Tracer
 from novapolis.algorithms.traversal import (
     bfs,
+    build_path,
     connected_components,
     dfs,
     find_directed_cycle,
@@ -605,3 +606,134 @@ def m5_scenarios(ident: str, noms: list[str] | None = None, periode: str | None 
             "temps_ms": ms,
         }
     )
+
+
+# --- Laboratoire : un algorithme exécuté avec le traceur, rejoué pas à pas par l'UI ----------------
+
+LAB_ALGOS = ("bfs", "dfs", "dijkstra", "bellman_ford", "floyd_warshall", "kruskal", "prim")
+LAB_MAX_N = 400  # au-delà, l'animation pas à pas n'a plus de sens (et la trace devient énorme)
+LAB_MAX_FLOYD = 200
+
+
+def _source_defaut(ds: Dataset) -> int:
+    """Première caserne du jeu (sinon le premier site)."""
+    return next((i for i, s in enumerate(ds.sites) if s.type == "caserne"), 0)
+
+
+def lab_run(ident: str, algo: str, source: str | None = None, cible: str | None = None, scenario: str = "normal", periode: str | None = None) -> dict:
+    """Exécute UN algorithme avec le traceur ; renvoie le graphe, les événements (identifiants de sites) et le résultat.
+
+    L'interface ne fait que REJOUER ces événements : c'est exactement le code de la CLI qui tourne.
+    Le temps affiché est celui d'une seconde exécution sans traceur (le traçage ralentit l'algorithme).
+    """
+    if algo not in LAB_ALGOS:
+        raise ValueError(f"Algorithme inconnu : {algo} (attendu : {', '.join(LAB_ALGOS)})")
+    ds = load(ident)
+    if len(ds.sites) > LAB_MAX_N:
+        raise ValueError(f"{len(ds.sites)} sites : trop pour une animation pas à pas (maximum {LAB_MAX_N}). Choisissez le jeu mini ou novapolis.")
+    if algo == "floyd_warshall" and len(ds.sites) > LAB_MAX_FLOYD:
+        raise ValueError(f"Floyd–Warshall est en O(|V|³) : animation limitée à {LAB_MAX_FLOYD} sites.")
+    scen = apply_scenario(ds, scenario)
+    xy = project(ds)
+    noeuds = [{"id": s.id, "nom": s.nom, "type": s.type, "x": xy[i][0], "y": xy[i][1]} for i, s in enumerate(ds.sites)]
+    tracer = Tracer(limite=8000)
+    sortie: dict = {"dataset": ident, "algo": algo, "scenario": scenario, "noeuds": noeuds}
+
+    if algo in ("kruskal", "prim"):
+        ug = build_fibre_graph(scen.dataset)
+        ids = ug.ids
+        depart = ug.index.get(source, _source_defaut(ds)) if source else _source_defaut(ds)
+        if algo == "kruskal":
+            r = kruskal(ug, tracer)
+            _, ms = chrono(kruskal, ug)
+        else:
+            r = prim(ug, tracer, depart)
+            _, ms = chrono(prim, ug, None, depart)
+        events = []
+        for ev in tracer.events:
+            e2 = dict(ev)
+            if "arete" in ev:
+                ed = ug.edges[ev["arete"]]
+                e2.update(u=ids[ed.u], v=ids[ed.v], cout=ed.w)
+            if "sommet" in ev:
+                e2["sommet"] = ids[ev["sommet"]]
+            if "uf" in e2:
+                uf = e2.pop("uf")
+                e2["composantes"] = sum(1 for i, x in enumerate(uf) if i == x) if uf else None
+            events.append(e2)
+        sortie.update(
+            oriente=False,
+            periode=None,
+            source=ids[depart] if algo == "prim" else None,
+            cible=None,
+            aretes=[{"id": k, "u": ids[e.u], "v": ids[e.v], "w": e.w} for k, e in enumerate(ug.edges)],
+            resultat={"aretes": [[ids[ug.edges[e].u], ids[ug.edges[e].v]] for e in r.aretes], "cout": r.cout, "composantes": r.composantes},
+            chemin=None,
+            cout_chemin=None,
+        )
+    else:
+        _, p = periodes(scen, periode)
+        g = build_road_graph(scen.dataset, p)
+        ids = g.ids
+        for nom in (source, cible):
+            if nom and nom not in g.index:
+                raise KeyError(f"Site inconnu : {nom}")
+        s = g.index[source] if source else _source_defaut(ds)
+        t = g.index[cible] if cible else None
+        chemin, cout_chemin, resultat = None, None, {}
+        if algo in ("bfs", "dfs"):
+            f = bfs if algo == "bfs" else dfs
+            r = f(g, [s], tracer)
+            _, ms = chrono(f, g, [s])
+            resultat = {"niveau": {ids[i]: r.niveau[i] for i in range(g.n)}, "atteints": sum(1 for x in r.niveau if x != -1)}
+            if t is not None:
+                ch = build_path(r.parent, s, t)
+                chemin = [ids[x] for x in ch] if ch else None
+                cout_chemin = len(ch) - 1 if ch else None  # nombre d'arcs (parcours non pondéré)
+        elif algo in ("dijkstra", "bellman_ford"):
+            f = dijkstra if algo == "dijkstra" else bellman_ford
+            r = f(g, [s], tracer)
+            _, ms = chrono(f, g, [s])
+            absorbant = bool(r.relaxables)
+            # une distance diminuable sans fin n'est jamais affichée comme un nombre fini
+            dist = _propager_moins_inf(g, r.dist, r.relaxables) if absorbant else r.dist
+            resultat = {"dist": {ids[i]: dist[i] for i in range(g.n)}, "passes": r.passes if algo == "bellman_ford" else None,
+                        "circuit_absorbant": absorbant, "relaxables": [ids[x] for x in (r.relaxables or [])]}
+            if t is not None and r.dist[t] < INF and not absorbant:
+                chemin = [ids[x] for x in path_from_parent(r.parent, t)]
+                cout_chemin = r.dist[t]
+        else:
+            d, suivant = floyd_warshall(g, tracer)
+            _, ms = chrono(floyd_warshall, g)
+            sur_cycle = [k for k in range(g.n) if d[k][k] < 0]
+            absorbant = bool(sur_cycle)
+            dist_s = [float("-inf") if any(d[s][k] < INF and d[k][j] < INF for k in sur_cycle) else d[s][j] for j in range(g.n)]
+            resultat = {"dist": {ids[j]: dist_s[j] for j in range(g.n)}, "circuit_absorbant": absorbant}
+            if t is not None and d[s][t] < INF and not absorbant:
+                ch = path_from_next(suivant, s, t)
+                chemin = [ids[x] for x in ch] if ch else None
+                cout_chemin = d[s][t]
+        events = []
+        for ev in tracer.events:
+            e2 = dict(ev)
+            for cle in ("sommet", "depuis"):
+                if cle in ev:
+                    e2[cle] = ids[ev[cle]]
+            if "k" in ev:
+                e2["pivot"] = ids[ev["k"]]
+            for cle in ("file", "pile", "relaxables"):
+                if ev.get(cle) is not None:
+                    e2[cle] = [ids[x] for x in ev[cle]]
+            events.append(e2)
+        sortie.update(
+            oriente=True,
+            periode=p,
+            source=ids[s],
+            cible=ids[t] if t is not None else None,
+            aretes=[{"id": k, "u": ids[u], "v": ids[v], "w": w} for k, (u, v, w, _) in enumerate(g.arcs())],
+            resultat=resultat,
+            chemin=chemin,
+            cout_chemin=cout_chemin,
+        )
+    sortie.update(events=events, tronque=tracer.tronque, temps_ms=ms)
+    return clean(sortie)

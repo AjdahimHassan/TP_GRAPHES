@@ -2,7 +2,7 @@
 
 Exemples (voir README) :
   novapolis validate --data data/novapolis
-  novapolis route --data data/novapolis --demande D-07 --algo all --scenario fermeture_axe
+  novapolis route --data data/novapolis --demande D-02 --algo all --scenario fermeture_axe
 """
 
 from __future__ import annotations

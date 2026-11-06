@@ -1,3 +1,6 @@
 # Fins de ligne LF partout : les CSV doivent rester identiques octet par octet (empreintes SHA-256).
 * text=auto eol=lf
 *.png binary
+# Les scripts Windows exigent des fins de ligne CRLF.
+*.cmd text eol=crlf
+*.bat text eol=crlf

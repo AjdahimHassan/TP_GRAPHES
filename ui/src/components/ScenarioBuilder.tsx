@@ -7,6 +7,7 @@ import { Card, Pill, Seg } from './ui'
 import { api } from '../lib/api'
 import { useStore } from '../lib/store'
 import type { GraphPayload } from '../lib/types'
+import { MAP } from '../theme/tokens'
 
 export interface BuilderAction { cible: string; u: string; v: string; action: string; valeur: string; periode: string }
 
@@ -43,37 +44,38 @@ export default function ScenarioBuilder({ graph, onEvaluate, onClose }: { graph:
     } catch (e: any) { s.toast('error', e.message) }
   }
 
-  const sel = actions.filter(a => a.cible === 'route').map(a => ({ u: a.u, v: a.v, color: '#FF4D4D', dashed: true, width: 3 }))
-  const selF = actions.filter(a => a.cible === 'fibre').map(a => ({ u: a.u, v: a.v, color: '#FF4D4D', dots: true, width: 3.5 }))
+  const sel = actions.filter(a => a.cible === 'route').map(a => ({ u: a.u, v: a.v, color: a.action === 'fermer' ? MAP.closed : MAP.works, dashed: true, width: 3.4 }))
+  const selF = actions.filter(a => a.cible === 'fibre').map(a => ({ u: a.u, v: a.v, color: MAP.closed, dots: true, width: 3.8 }))
   return (
-    <Card title={<><Plus size={15} color="#FFB547" /> Nouveau scénario <Pill kind="am">ne modifie jamais la base</Pill></>} right={onClose && <button className="mu" onClick={onClose}><X size={15} /></button>} glow="#6a4c18">
-      <div className="grid gap-3.5" style={{ gridTemplateColumns: '1fr 320px' }}>
-        <NetworkCanvas sites={graph.sites} routes={graph.routes} fibre={graph.fibre} decor={graph.decor} showFibre={cible === 'fibre'} dimRoads={cible === 'fibre'} height={420}
+    <Card title={<><Plus size={18} color="var(--navy)" /> Nouveau scénario <Pill kind="in">ne modifie jamais la base</Pill></>} sub="Choisissez une cible et une action, puis cliquez sur la carte : chaque clic ajoute une ligne à scenarios.csv."
+      right={onClose && <button className="btn btn-gh btn-sm" onClick={onClose}><X size={14} />Fermer</button>} glow="var(--navy-line)">
+      <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_360px]">
+        <NetworkCanvas sites={graph.sites} routes={graph.routes} fibre={graph.fibre} decor={graph.decor} showFibre={cible === 'fibre'} dimRoads={cible === 'fibre'} height={460}
           edges={[...sel, ...selF]} selected={actions.filter(a => a.cible === 'site').map(a => a.u)}
           onRoadClick={surRoute} onFibreClick={surFibre} onSiteClick={surSite}
-          overlay={<div className="mapover text-[11.5px]" style={{ left: 10, top: 10 }}>Cliquez {cible === 'route' ? 'sur des routes' : cible === 'fibre' ? 'sur des tronçons de fibre' : 'sur des sites'} pour les ajouter</div>} />
-        <div className="flex flex-col gap-2.5">
-          <div className="field">Nom du scénario<input className="inp" value={nom} onChange={e => setNom(e.target.value.replace(/[^A-Za-z0-9_-]/g, '_'))} /></div>
+          overlay={<div className="mapover text-[14px] font-medium" style={{ left: 12, top: 12 }}>Cliquez {cible === 'route' ? 'sur des routes' : cible === 'fibre' ? 'sur des tronçons de fibre' : 'sur des sites'} pour les ajouter</div>} />
+        <div className="flex flex-col gap-3">
+          <div className="field">Nom du scénario<input className="inp mono" value={nom} onChange={e => setNom(e.target.value.replace(/[^A-Za-z0-9_-]/g, '_'))} /></div>
           <Seg value={cible} onChange={v => { setCible(v); setAction(v === 'fibre' ? 'panne' : 'fermer') }} options={[{ v: 'route', l: 'Routes' }, { v: 'fibre', l: 'Fibre' }, { v: 'site', l: 'Sites' }]} />
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-2 gap-3">
             <div className="field">Action<select className="inp" value={action} onChange={e => setAction(e.target.value)}>{actionsPossibles.map(a => <option key={a}>{a}</option>)}</select></div>
             <div className="field">Période<select className="inp" value={periode} onChange={e => setPeriode(e.target.value)}><option>normal</option><option>pointe</option></select></div>
           </div>
-          {action.endsWith('_temps') && <div className="field">{action === 'multiplier_temps' ? 'Facteur' : 'Nouveau temps (min)'}<input className="inp" value={valeur} onChange={e => setValeur(e.target.value)} /></div>}
-          {cible === 'route' && <label className="flex items-center gap-2 text-[12px] mu"><input type="checkbox" checked={deuxSens} onChange={e => setDeuxSens(e.target.checked)} /> appliquer aux deux sens</label>}
-          <div className="mu text-[11px] uppercase tracking-wider font-semibold mt-1">Lignes ajoutées à scenarios.csv ({actions.length})</div>
-          <div className="overflow-auto" style={{ maxHeight: 170 }}>
+          {action.endsWith('_temps') && <div className="field">{action === 'multiplier_temps' ? 'Facteur multiplicatif' : 'Nouveau temps (min)'}<input className="inp mono" value={valeur} onChange={e => setValeur(e.target.value)} /></div>}
+          {cible === 'route' && <label className="flex items-center gap-2 text-[14px] text-ink2"><input type="checkbox" checked={deuxSens} onChange={e => setDeuxSens(e.target.checked)} /> appliquer aux deux sens de circulation</label>}
+          <div className="lbl mt-1">Lignes ajoutées à scenarios.csv ({actions.length})</div>
+          <div className="overflow-auto rounded-lg" style={{ maxHeight: 190, border: '1px solid var(--rule)' }}>
             {actions.map((a, k) => (
-              <div key={k} className="flex items-center gap-2 text-[11.5px] py-1 border-b border-[#141d35]">
-                <span className="mono">{nom},{a.cible},{a.u},{a.v},{a.action},{a.valeur},{a.periode}</span>
-                <button className="ml-auto mu" onClick={() => setActions(xs => xs.filter((_, j) => j !== k))}><Trash2 size={12} /></button>
+              <div key={k} className="flex items-center gap-2 text-[12.5px] px-2.5 py-1.5" style={{ borderBottom: '1px solid var(--hair)' }}>
+                <span className="mono truncate">{nom},{a.cible},{a.u},{a.v},{a.action},{a.valeur},{a.periode}</span>
+                <button className="ml-auto mu hover:text-ink shrink-0" onClick={() => setActions(xs => xs.filter((_, j) => j !== k))} title="Retirer"><Trash2 size={14} /></button>
               </div>
             ))}
-            {!actions.length && <div className="mu2 text-[11.5px]">Aucune action : cliquez sur la carte.</div>}
+            {!actions.length && <div className="mu text-[13.5px] p-3">Aucune action : cliquez sur la carte.</div>}
           </div>
           <div className="flex gap-2 mt-auto">
-            {onEvaluate && <button className="btn btn-gh flex-1 justify-center" disabled={!actions.length} onClick={() => onEvaluate(nom, actions)}>Évaluer</button>}
-            <button className="btn btn-pri flex-1 justify-center" disabled={!actions.length} onClick={enregistrer}><Save size={13} />Ajouter au jeu</button>
+            {onEvaluate && <button className="btn btn-gh flex-1 justify-center" disabled={!actions.length} onClick={() => onEvaluate(nom, actions)}>Évaluer sans enregistrer</button>}
+            <button className="btn btn-pri flex-1 justify-center" disabled={!actions.length} onClick={enregistrer}><Save size={15} />Ajouter au jeu</button>
           </div>
         </div>
       </div>

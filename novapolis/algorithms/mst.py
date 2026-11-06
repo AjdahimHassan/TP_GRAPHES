@@ -69,6 +69,8 @@ def prim(ug: UGraph, tracer: Tracer | None = None, depart: int = 0) -> MSTResult
         while tas:
             w, _, eid, v = heapq.heappop(tas)
             if dans_arbre[v]:
+                if tracer:
+                    tracer.emit("ignore", arete=eid, sommet=v, cout=w, tas=len(tas))
                 continue  # les deux extrémités sont déjà couvertes : arête ignorée
             dans_arbre[v] = True
             choisies.append(eid)

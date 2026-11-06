@@ -31,9 +31,16 @@ def run(*cmd: str, cwd: str = RACINE) -> None:
     subprocess.run(list(cmd), cwd=cwd, check=True)
 
 
+def npm_disponible() -> bool:
+    return shutil.which("npm") is not None
+
+
 def install() -> None:
     run(PY, "-m", "pip", "install", "-e", ".[dev]")
-    run(NPM, "install", "--no-audit", "--no-fund", cwd=os.path.join(RACINE, "ui"))
+    if npm_disponible():
+        run(NPM, "install", "--no-audit", "--no-fund", cwd=os.path.join(RACINE, "ui"))
+    else:
+        print("npm introuvable : dépendances de l'interface non installées (inutile si ui/dist est déjà construit).")
 
 
 def data() -> None:
@@ -73,13 +80,18 @@ def demo() -> None:
         import novapolis  # noqa: F401
     except ImportError:
         install()
-    if not os.path.isdir(os.path.join(RACINE, "ui", "node_modules")):
+    if npm_disponible() and not os.path.isdir(os.path.join(RACINE, "ui", "node_modules")):
         run(NPM, "install", "--no-audit", "--no-fund", cwd=os.path.join(RACINE, "ui"))
     if not os.path.exists(os.path.join(RACINE, "data", "novapolis", "sites.csv")):
         data()
     if not os.path.exists(os.path.join(RACINE, "reports", "bench.csv")):
         figures()
-    build()
+    if npm_disponible():
+        build()
+    elif os.path.exists(os.path.join(RACINE, "ui", "dist", "index.html")):
+        print("npm introuvable : on réutilise l'interface déjà construite (ui/dist).")
+    else:
+        sys.exit("npm introuvable et ui/dist absent : installez Node.js (≥ 18) puis relancez « python tasks.py demo ».")
     serveur = subprocess.Popen([PY, "-m", "uvicorn", "novapolis.api.main:app", "--host", "127.0.0.1", "--port", "8000"], cwd=RACINE)
     time.sleep(2.5)
     webbrowser.open("http://127.0.0.1:8000/")

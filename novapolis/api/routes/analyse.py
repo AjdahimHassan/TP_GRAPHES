@@ -115,7 +115,7 @@ COMMANDES = [
     ("Figure 1 · accessibilité depuis les casernes", "novapolis access --data data/novapolis --sources casernes --export out/access.json", "novapolis"),
     ("Tableau 1 · composantes fortement connexes", "novapolis access --data data/novapolis --mode scc", "novapolis"),
     ("Tableau 2 · itinéraires après fermeture", "novapolis routes --data data/novapolis --scenario fermeture_axe --export out/routes.csv", "novapolis"),
-    ("Tableau 3 · comparaison des algorithmes (D-07)", "novapolis route --data data/novapolis --demande D-07 --algo all --scenario fermeture_axe", "novapolis"),
+    ("Tableau 3 · comparaison des algorithmes (D-02, la plus retardée)", "novapolis route --data data/novapolis --demande D-02 --algo all --scenario fermeture_axe", "novapolis"),
     ("Tableau 4 · circuits absorbants (test A)", "novapolis negcycle --data data/negatif_accessible --source S --algo all", "negatif_accessible"),
     ("Tableau 5 · circuits absorbants (test B)", "novapolis negcycle --data data/negatif_inaccessible --source S --algo all", "negatif_inaccessible"),
     ("Figure 4 · ACM Kruskal vs Prim", "novapolis mst --data data/novapolis --algo both", "novapolis"),

@@ -35,7 +35,7 @@ Kruskal (Union–Find : compression + rang) vs Prim (tas) : coût identique, ens
 preuve d'existence de plusieurs ACM (échange de même coût) ; forêt couvrante ; étude de panne et raccordement.
 
 ## 8. M5 — Résilience (≈ 1 p.)
-Tableau des 5 indicateurs × 6 scénarios (`novapolis scenarios --all`), graphique en barres + radar, discussion.
+Tableau des 5 indicateurs × 6 scénarios (`novapolis scenarios --all`), petits multiples (un panneau par indicateur), discussion.
 Preuve d'immuabilité : empreinte SHA-256 de la base avant = après.
 
 ## 9. Expériences (≈ 1,5 p.)

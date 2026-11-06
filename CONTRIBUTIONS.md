@@ -12,7 +12,7 @@
 ## Travail commun
 
 - Modélisation et format des données (`data/SCHEMA.md`), jeu `mini` calculé à la main (`data/mini/EXPECTED.md`).
-- Rapport (`reports/rapport_plan.md`) et répétition de la démonstration (mode démo de l'UI, 8 étapes).
+- Rapport (`reports/rapport_plan.md`) et répétition de la démonstration (bouton « Présenter » de l'UI, 12 étapes).
 
 ## Journal
 

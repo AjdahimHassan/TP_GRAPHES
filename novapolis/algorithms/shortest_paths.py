@@ -52,12 +52,14 @@ def dijkstra(g: DiGraph, sources: list[int], tracer: Tracer | None = None) -> SP
                 raise ValueError("Dijkstra exige des poids positifs ou nuls : utiliser Bellman–Ford")
             nd = d + e.w
             if nd < dist[e.v]:  # relâchement de l'arc u → v
+                if tracer:
+                    tracer.emit("relache", depuis=u, sommet=e.v, dist=nd, w=e.w, ancien=dist[e.v])
                 dist[e.v] = nd
                 parent[e.v] = u
                 origine[e.v] = origine[u]
                 heapq.heappush(tas, (nd, e.v))
-                if tracer:
-                    tracer.emit("relache", depuis=u, sommet=e.v, dist=nd)
+            elif tracer:  # arc examiné sans amélioration (traçage seulement)
+                tracer.emit("ignore", depuis=u, sommet=e.v, dist=nd, w=e.w, ancien=dist[e.v])
     return SPResult(dist, parent, origine)
 
 
@@ -73,15 +75,17 @@ def bellman_ford(g: DiGraph, sources: list[int], tracer: Tracer | None = None) -
     for _ in range(max(g.n - 1, 0)):
         passes += 1
         change = False
+        if tracer:
+            tracer.emit("passe", passe=passes)
         for u, v, w in arcs:
             du = dist[u]
             if du != INF and du + w < dist[v]:
+                if tracer:
+                    tracer.emit("relache", passe=passes, depuis=u, sommet=v, dist=du + w, w=w, ancien=dist[v])
                 dist[v] = du + w
                 parent[v] = u
                 origine[v] = origine[u]
                 change = True
-                if tracer:
-                    tracer.emit("relache", passe=passes, depuis=u, sommet=v, dist=dist[v])
         if not change:
             break  # plus aucune amélioration possible : distances définitives
     # Passe de contrôle |V| : un arc encore relâchable ⇒ circuit absorbant atteignable
@@ -89,6 +93,8 @@ def bellman_ford(g: DiGraph, sources: list[int], tracer: Tracer | None = None) -
     for u, v, w in arcs:
         if dist[u] != INF and dist[u] + w < dist[v]:
             relaxables.append(v)
+    if tracer:
+        tracer.emit("controle", passes=passes, relaxables=sorted(set(relaxables)))
     return SPResult(dist, parent, origine, relaxables=sorted(set(relaxables)), passes=passes)
 
 
@@ -97,7 +103,10 @@ def floyd_warshall(g: DiGraph, tracer: Tracer | None = None) -> tuple[list[list[
     n = g.n
     d = g.to_matrix()
     suivant = [[j if d[i][j] < INF else -1 for j in range(n)] for i in range(n)]
+    if tracer:  # matrice complète seulement pour les petits graphes (réponse légère)
+        tracer.emit("init", matrice=[row[:] for row in d] if n <= 15 else None)
     for k in range(n):
+        avant = [row[:] for row in d] if tracer and n <= 60 else None
         dk = d[k]
         for i in range(n):
             dik = d[i][k]
@@ -112,7 +121,8 @@ def floyd_warshall(g: DiGraph, tracer: Tracer | None = None) -> tuple[list[list[
                     di[j] = c
                     si[j] = sik
         if tracer:
-            tracer.emit("pivot", k=k)
+            maj = [[i, j] for i in range(n) for j in range(n) if d[i][j] != avant[i][j]] if avant is not None else None
+            tracer.emit("pivot", k=k, maj=maj, matrice=[row[:] for row in d] if n <= 15 else None)
     return d, suivant
 
 

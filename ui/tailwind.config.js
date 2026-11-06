@@ -1,16 +1,21 @@
-/** Jetons de design (voir src/theme/tokens.ts) */
+/** Jetons de design : les couleurs pointent vers les variables CSS de src/index.css (thème « papier académique »). */
 export default {
   content: ['./index.html', './src/**/*.{ts,tsx}'],
   theme: {
     extend: {
       colors: {
-        bg: '#070B16', s1: '#0E1527', s2: '#131C33', s3: '#18233F', bd: '#1E2A47', bd2: '#2A3A60',
-        tx: '#E7ECF5', mu: '#8592AE', mu2: '#5D6A88',
-        red: '#FF5468', amb: '#FFB547', cy: '#2EE6D6', ok: '#3DDC97', ko: '#FF4D4D', info: '#7C8CFF',
-        hop: '#FF5468', cas: '#FF9F43', eco: '#FFD166', tel: '#A78BFA', qua: '#5B6B8F',
+        paper: 'var(--paper)', surface: 'var(--surface)', surface2: 'var(--surface-2)', surface3: 'var(--surface-3)',
+        rule: 'var(--rule)', rule2: 'var(--rule-2)',
+        ink: 'var(--ink)', ink2: 'var(--ink-2)', muted: 'var(--muted)', faint: 'var(--faint)',
+        navy: 'var(--navy)', navy2: 'var(--navy-2)', navysoft: 'var(--navy-soft)',
+        ok: 'var(--ok)', ko: 'var(--ko)', warn: 'var(--warn)',
       },
-      fontFamily: { sans: ['Inter', 'system-ui', 'sans-serif'], mono: ['"JetBrains Mono"', 'ui-monospace', 'monospace'] },
-      borderRadius: { card: '14px' },
+      fontFamily: {
+        sans: ['Inter', 'system-ui', 'sans-serif'],
+        serif: ['"Source Serif 4"', 'Georgia', 'serif'],
+        mono: ['"JetBrains Mono"', 'ui-monospace', 'monospace'],
+      },
+      borderRadius: { card: '12px' },
     },
   },
   plugins: [],
