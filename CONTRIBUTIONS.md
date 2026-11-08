@@ -1,21 +1,25 @@
 # Relevé des contributions
 
-> À compléter par l'équipe (noms, détail réel des tâches). Chaque membre doit pouvoir expliquer **tous** les algorithmes
-> et les choix de conception : la note individuelle peut différer de la note du groupe.
-
 | Membre | Modules principaux | Fichiers | Tests / livrables |
 |---|---|---|---|
-| Membre 1 | M2 Itinéraires · M5 Scénarios · interface | `algorithms/shortest_paths.py`, `indicators.py`, `graph/scenario.py`, `ui/` | `test_mini_expected.py` (M2/M5), démo |
-| Membre 2 | M4 Fibre · Union–Find · benchmarks | `algorithms/mst.py`, `algorithms/union_find.py`, `bench.py`, `scripts/make_figures.py` | `test_cross_networkx.py`, figures |
-| Membre 3 | M1 Parcours · M3 Circuits absorbants · données | `algorithms/traversal.py`, `algorithms/negative_cycles.py`, `io/`, `generator.py` | `test_negative_cycles.py`, `test_data_pipeline.py` |
+| Hassan AJDAHIM | Développement : modules M1 à M5, données, CLI, API et interface | `novapolis/`, `tests/`, `scripts/`, `data/`, `ui/` | Code source, tests automatisés, jeux de données, README ; rapport : modélisation, architecture |
+| Andreja JOVANOVIC | Théorie M1, M2, M3 : parcours, connexité, plus courts chemins, circuits absorbants | `reports/` (problème, M1, M2, M3), `data/mini/EXPECTED.md` (M1 à M3) | Vérification à la main de M1 à M3 sur le jeu `mini` ; rapport : problème, M1, M2, M3 |
+| Angelo CUNHA VELHO MACHADO | Théorie M4, M5, benchmarks : arbres couvrants, résilience, analyse des mesures | `reports/` (M4, M5, expériences, limites), `data/mini/EXPECTED.md` (M4, M5) | Vérification à la main de M4 et M5 sur le jeu `mini`, analyse des benchmarks ; rapport : M4, M5, expériences, limites |
 
-## Travail commun
+## Détail du travail théorique
 
-- Modélisation et format des données (`data/SCHEMA.md`), jeu `mini` calculé à la main (`data/mini/EXPECTED.md`).
-- Rapport (`reports/rapport_plan.md`) et répétition de la démonstration (bouton « Présenter » de l'UI, 12 étapes).
+**Hassan AJDAHIM**
 
-## Journal
+- Justification des structures de données et de l'architecture logicielle.
 
-| Date | Membre | Contribution |
-|---|---|---|
-| | | |
+**Andreja JOVANOVIC**
+
+- Différence entre accessibilité depuis une source, connexité faible et connexité forte.
+- Plus courts chemins : pourquoi Dijkstra exige des poids non négatifs, comparaison avec Bellman–Ford et Floyd–Warshall, complexités.
+- Circuits absorbants : détection, accessibilité depuis la source, distances égales à −∞.
+
+**Angelo CUNHA VELHO MACHADO**
+
+- Arbres couvrants : pourquoi plusieurs arbres minimaux peuvent exister, Union–Find et complexité, réparation après une panne.
+- Résilience : lecture des indicateurs pour chaque scénario, limites du modèle, recommandations.
+- Benchmarks : comparaison des mesures aux complexités théoriques et discussion des écarts.
