@@ -101,13 +101,12 @@ def graph(ident: str, scenario: str = "normal", periode: str | None = None):
 
 @router.get("/docs-projet/{nom}", response_class=PlainTextResponse)
 def doc(nom: str):
-    """Documents du projet (README, SCHEMA, CONTRIBUTIONS, plan du rapport, EXPECTED du jeu mini)."""
+    """Documents du projet (README, SCHEMA, CONTRIBUTIONS, EXPECTED du jeu mini)."""
     autorises = {
         "README.md": os.path.join(S.RACINE, "README.md"),
         "CONTRIBUTIONS.md": os.path.join(S.RACINE, "CONTRIBUTIONS.md"),
         "SCHEMA.md": os.path.join(S.DATA_DIR, "SCHEMA.md"),
         "EXPECTED.md": os.path.join(S.DATA_DIR, "mini", "EXPECTED.md"),
-        "rapport_plan.md": os.path.join(S.RACINE, "reports", "rapport_plan.md"),
     }
     if nom not in autorises or not os.path.exists(autorises[nom]):
         raise FileNotFoundError(f"Document introuvable : {nom}")

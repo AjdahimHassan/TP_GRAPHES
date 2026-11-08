@@ -5,6 +5,8 @@ Outil reproductible pour : (1) diagnostiquer l'accessibilité des quartiers depu
 (2) recommander des itinéraires de secours quand des routes sont fermées, (3) concevoir un réseau de fibre
 à coût minimal et le réparer en cas de panne.
 
+**Documents du rendu :** [rapport de projet](reports/Rapport_AJDAHIM_Hassan_JOVANOVIC_Andreja_CUNHA_VELHO_MACHADO_Angelo.pdf) · [correspondance entre le sujet et le code](reports/correspondance_sujet_code.pdf) · [contributions](CONTRIBUTIONS.md)
+
 > **Données synthétiques.** Novapolis est une ville fictive : tous les jeux de `data/` sont générés par
 > `novapolis/generator.py` avec des graines documentées (badge « SYNTHÉTIQUE » dans l'UI).
 
@@ -16,7 +18,7 @@ Outil reproductible pour : (1) diagnostiquer l'accessibilité des quartiers depu
 
 ## Installation
 
-Prérequis : Python ≥ 3.11 et Node.js ≥ 18 (avec npm). Toutes les commandes se lancent depuis le dossier du projet.
+Prérequis : Python ≥ 3.11. Node.js ≥ 18 (avec npm) n'est utile que pour modifier l'interface. Toutes les commandes se lancent depuis le dossier du projet.
 
 **1. Créer l'environnement virtuel Python** (une seule fois) :
 
@@ -40,7 +42,7 @@ scripts est désactivée »), lancer une fois `Set-ExecutionPolicy -Scope Curren
 
 ```bash
 pip install -e ".[dev]"
-npm --prefix ui install
+npm --prefix ui install   # facultatif : seulement pour modifier l'interface
 ```
 
 **4. Tout lancer** (génère les données si besoin, construit l'UI, démarre l'API et ouvre le navigateur sur
@@ -51,12 +53,12 @@ python tasks.py demo
 ```
 
 `python tasks.py demo` fait aussi les étapes 3 si elles manquent. Sous Linux/macOS, `make demo` est équivalent.
-Pour arrêter : Ctrl+C dans le terminal. Node.js ne sert qu'à **construire** l'interface : si `npm` est introuvable mais
-que `ui/dist` existe déjà, `python tasks.py demo` réutilise l'interface construite.
+Pour arrêter : Ctrl+C dans le terminal. L'interface construite est livrée dans `ui/dist` : si `npm` est introuvable,
+`python tasks.py demo` la réutilise telle quelle.
 
 Autres cibles : `make data | test | bench | figures | api | ui | build` (= `python tasks.py <cible>`).
 En développement : `novapolis serve` (API :8000) puis `npm --prefix ui run dev` (UI :5173).
-Une fois `ui/dist` construit, l'API sert aussi l'interface sur http://127.0.0.1:8000 (fonctionne hors ligne : polices
+L'API sert aussi l'interface livrée dans `ui/dist` sur http://127.0.0.1:8000 (fonctionne hors ligne : polices
 embarquées, aucun fond de carte externe).
 
 ## Commandes (fichier + scénario + opération)
@@ -169,7 +171,7 @@ Contexte global (jeu, scénario, période) dans l'URL ; **Ctrl+K** palette de co
 
 1. **Windows : double-cliquer `presentation.cmd`** (à la racine du projet) : il démarre l'API et ouvre le navigateur
    sur http://127.0.0.1:8000 ; Ctrl+C dans sa fenêtre pour arrêter. Ailleurs, environnement activé : `novapolis serve`.
-   Une fois `ui/dist` construit, **seul Python est nécessaire** (polices embarquées, aucune ressource externe :
+   `ui/dist` étant livré, **seul Python est nécessaire** (polices embarquées, aucune ressource externe :
    fonctionne hors ligne). Dans l'invite de commandes (cmd), les chemins s'écrivent avec `\` : `.venv\Scripts\novapolis.exe serve`.
 2. Cliquer **Présenter** : plein écran, sommaire replié, visite guidée en **12 étapes** (← / → ou télécommande
    PageUp / PageDown, **Échap** pour quitter). L'étape 5 choisit automatiquement la demande la plus retardée par la
@@ -202,4 +204,4 @@ Bellman–Ford ≈ 1,5 au lieu de 2 car l'arrêt anticipé stoppe après ≈ dia
 Temps statiques (pas de trafic temps réel), capacité des casernes et incidents simultanés ignorés, facteur travaux
 supposé, coûts de fibre synthétiques. Un chemin de coût minimal ne garantit pas une intervention réaliste.
 
-Contributions : [`CONTRIBUTIONS.md`](CONTRIBUTIONS.md) · Plan du rapport : [`reports/rapport_plan.md`](reports/rapport_plan.md).
+Contributions : [`CONTRIBUTIONS.md`](CONTRIBUTIONS.md) · Rapport : [`reports/Rapport_AJDAHIM_Hassan_JOVANOVIC_Andreja_CUNHA_VELHO_MACHADO_Angelo.pdf`](reports/Rapport_AJDAHIM_Hassan_JOVANOVIC_Andreja_CUNHA_VELHO_MACHADO_Angelo.pdf).
